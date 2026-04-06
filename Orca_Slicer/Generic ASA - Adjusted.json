@@ -1,0 +1,30 @@
+{
+    "chamber_temperature": [
+        "55"
+    ],
+    "compatible_printers": [
+        "Qidi X-Plus 4 0.4 nozzle"
+    ],
+    "filament_extruder_variant": [
+        "Direct Drive Standard"
+    ],
+    "filament_settings_id": [
+        "Generic ASA - Adjusted"
+    ],
+    "from": "User",
+    "hot_plate_temp_initial_layer": [
+        "100"
+    ],
+    "inherits": "Generic ASA @System",
+    "name": "Generic ASA - Adjusted",
+    "nozzle_temperature_range_high": [
+        "260"
+    ],
+    "nozzle_temperature_range_low": [
+        "260"
+    ],
+    "slow_down_layer_time": [
+        "10"
+    ],
+    "version": "2.3.1.10"
+}
