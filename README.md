@@ -70,6 +70,9 @@ https://www.amazon.com/HOXHA-Window-Ducting-Portable-Inline/dp/B0FF4JRX53?s=appl
 
 ### 3D print mods
 
+PTFE hose anti wear
+https://www.printables.com/model/613216-ptfe-hose-anti-wear-for-bambu-lab-p1s-p2s-x1
+
 Rear chamber cover:
 https://www.printables.com/model/1040774-qidi-plus-4-rear-chamber-cover
 
