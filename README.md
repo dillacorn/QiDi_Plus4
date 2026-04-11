@@ -96,4 +96,4 @@ I recommend printing these mods in ASA.
 - [Door seal](https://www.printables.com/model/1271100-qidi-plus-4-door-seal)
 - [Simple poop box](https://www.printables.com/model/1214325-qidi-plus-4-poop-box/files)
 - [Poop chute alternative](https://www.printables.com/model/1337616-qidi-plus-4-poop-chute/comments)
-- [Chamber motherboard cover](https://www.printables.com/model/1196080-rear-covers-for-qidi-plus-4-printer)
+- [Chamber motherboard cover](https://www.printables.com/model/1040774-qidi-plus-4-rear-chamber-cover)
