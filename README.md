@@ -2,6 +2,15 @@
 
 My settings for my Plus4 in Orca Slicer, with QiDi Box support and Klipper `gcode_macro.cfg` / `printer.cfg` adjustments that can be modified in the Fluidd UI.
 
+## WARNING TIPs
+
+- Be careful when switching from high temp filaments to lower temp filaments. The cutter can leave high temp filament in the hotend, and feeding lower temp filament afterward can cause a jam. For mixed temperature swaps, manual unload/load is safest.
+- If you manually extract a high temp filament that is linked to the QiDi Box, make sure to also unload it from the QiDi Box afterward.
+- `Unmapped` does not mean QiDi Box is disabled.
+- For manual spool printing with QiDi Box connected, start the print from the printer screen and disable QiDi Box there.
+- `INIT_MAPPING_VALUE` is QiDi Box related.
+- A separate manual-spool profile is optional, but helps avoid mistakes.
+
 ## Z-offset note
 
 In `gcode_macro.cfg` in the Fluidd UI, the default `get_zoffset` value is:
