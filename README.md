@@ -68,20 +68,6 @@ I recommend printing these mods in ASA.
   Print two.
 - [4-inch window duct mount](https://www.amazon.com/HOXHA-Window-Ducting-Portable-Inline/dp/B0FF4JRX53?s=appliances)
 
-### 3D printed mods
-
-- [PTFE hose anti-wear](https://www.printables.com/model/613216-ptfe-hose-anti-wear-for-bambu-lab-p1s-p2s-x1)
-- [Rear chamber cover](https://www.printables.com/model/1040774-qidi-plus-4-rear-chamber-cover)
-- [Hotend air duct](https://www.printables.com/model/1033699-qidi-plus-4-hotend-air-duct)
-- [QiDi Plus4 plugs](https://www.printables.com/model/1161265-qidi-4-plus-plugs)
-- [Cable ramp v3 screw mount](https://www.printables.com/model/1504994-qidi-plus-4-cable-ramp-v3-screw-mount)
-- [Toolhead covers light](https://cults3d.com/en/3d-model/tool/qidi-plus-4-toolhead-covers-light)
-- [Repositioned camera bracket](https://cults3d.com/en/3d-model/tool/qidi-plus-4-repositioned-camera-bracket)
-- [Door seal with guide rails](https://www.printables.com/model/1504418-qidi-plus-4-door-seal-with-guide-rails)
-- [Door seal](https://www.printables.com/model/1271100-qidi-plus-4-door-seal)
-- [Simple poop box](https://www.printables.com/model/1214325-qidi-plus-4-poop-box/files)
-- [Poop chute alternative](https://www.printables.com/model/1337616-qidi-plus-4-poop-chute/comments)
-
 ### QiDi Box mods
 
 - [Bowden tube support / bracket for QiDi Box](https://www.printables.com/model/1408927-bowden-tube-support-qidi-plus-4-bracket-for-qidi-b)
@@ -96,3 +82,18 @@ I recommend printing these mods in ASA.
 - [80x80x38mm fan](https://www.amazon.com/PMD2408PMB3-4-8W-80X80X38MM-2-Wire-Cooling/dp/B0F5HPTXBM)
 - [Hex mainboard cover for 80mm fan](https://www.printables.com/model/1146502-qidi-plus-4-hex-mainboard-cover-for-80mm-fan-with)
 - [Fan grille](https://www.amazon.com/dp/B01CU72VS4)
+
+### 3D printed mods
+
+- [PTFE hose anti-wear](https://www.printables.com/model/613216-ptfe-hose-anti-wear-for-bambu-lab-p1s-p2s-x1)
+- [Rear chamber cover](https://www.printables.com/model/1040774-qidi-plus-4-rear-chamber-cover)
+- [Hotend air duct](https://www.printables.com/model/1033699-qidi-plus-4-hotend-air-duct)
+- [QiDi Plus4 plugs](https://www.printables.com/model/1161265-qidi-4-plus-plugs)
+- [Cable ramp v3 screw mount](https://www.printables.com/model/1504994-qidi-plus-4-cable-ramp-v3-screw-mount)
+- [Toolhead covers light](https://cults3d.com/en/3d-model/tool/qidi-plus-4-toolhead-covers-light)
+- [Repositioned camera bracket](https://cults3d.com/en/3d-model/tool/qidi-plus-4-repositioned-camera-bracket)
+- [Door seal with guide rails](https://www.printables.com/model/1504418-qidi-plus-4-door-seal-with-guide-rails)
+- [Door seal](https://www.printables.com/model/1271100-qidi-plus-4-door-seal)
+- [Simple poop box](https://www.printables.com/model/1214325-qidi-plus-4-poop-box/files)
+- [Poop chute alternative](https://www.printables.com/model/1337616-qidi-plus-4-poop-chute/comments)
+- [Chamber motherboard cover](https://www.printables.com/model/1196080-rear-covers-for-qidi-plus-4-printer)
