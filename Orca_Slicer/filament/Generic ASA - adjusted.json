@@ -17,9 +17,6 @@
     ],
     "inherits": "Generic ASA @System",
     "name": "Generic ASA - Adjusted",
-    "nozzle_temperature_range_high": [
-        "260"
-    ],
     "nozzle_temperature_range_low": [
         "260"
     ],

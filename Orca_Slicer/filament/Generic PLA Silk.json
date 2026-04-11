@@ -1,0 +1,18 @@
+{
+    "filament_extruder_variant": [
+        "Direct Drive Standard"
+    ],
+    "filament_settings_id": [
+        "Generic PLA Silk"
+    ],
+    "from": "User",
+    "hot_plate_temp": [
+        "60"
+    ],
+    "hot_plate_temp_initial_layer": [
+        "60"
+    ],
+    "inherits": "Qidi Generic PLA Silk @Qidi X-Plus 4 0.4 nozzle",
+    "name": "Generic PLA Silk",
+    "version": "2.3.2.60"
+}
