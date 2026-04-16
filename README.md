@@ -75,6 +75,8 @@ I recommend printing these mods in ASA.
 - [Bowden Y-splitter for QiDi Box AMS PC4-M6](https://www.printables.com/model/1413138-bowden-y-splitter-for-qidi-box-ams-pc4-m6)
 - [Extended angled spool holder for use with QiDi Box](https://www.printables.com/model/1477082-qidi-plus-4-extended-angled-spool-holder-use-with)
 - [Second spool holder and QiDi Box bracket](https://www.printables.com/model/1396483-qidi-plus-4-spool-holder-and-qidi-box-bracket/files)
+- [Qidi Box Filament Saver PC4-M6](https://www.printables.com/model/1572525-qidi-box-filament-saver-pc4-m6m10)
+- [AMS Saver Filament Guide](https://www.printables.com/model/710471-ams-saver-filament-guide)
 
 ### Cooling and exhaust mods
 
