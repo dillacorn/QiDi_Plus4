@@ -1,5 +1,5 @@
 {
-    "bottom_shell_layers": "5",
+    "bottom_shell_layers": "4",
     "bridge_acceleration": "1100",
     "bridge_speed": "42",
     "brim_type": "no_brim",
@@ -62,9 +62,8 @@
     "staggered_inner_seams": "1",
     "support_line_width": "104%",
     "support_on_build_plate_only": "1",
-    "support_style": "organic",
     "support_threshold_angle": "25",
-    "top_shell_layers": "6",
+    "support_type": "normal(auto)",
     "top_shell_thickness": "1.2",
     "top_surface_acceleration": "1100",
     "top_surface_jerk": "6",
