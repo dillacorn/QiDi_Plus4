@@ -12,6 +12,7 @@ My Orca Slicer settings for the QiDi Plus4, with QiDi Box support and Klipper `g
 - If you want to print from a manual spool while the QiDi Box is still connected, start the print from the printer screen and disable QiDi Box there.
 - `INIT_MAPPING_VALUE` is related to QiDi Box behavior.
 - A separate manual spool profile is optional, but it helps prevent mistakes.
+- If spool is unraveling in QiDi Box AMS check your rollers. QiDi Box essentially ruined a spool because roller wasn't rolling smoothly.. resolved by swapping rollers around, they pull out easily.
 
 ## Z-offset note
 
@@ -24,7 +25,7 @@ In `gcode_macro.cfg` in the Fluidd UI, the default `get_zoffset` value is:
 My current value is:
 
 ```jinja
-{% set p = (-0.05 + printer.gcode_move.homing_origin.z)|float %}
+{% set p = (-0.07 + printer.gcode_move.homing_origin.z)|float %}
 ```
 
 Do not treat `-0.15` as the correct value for every machine.
