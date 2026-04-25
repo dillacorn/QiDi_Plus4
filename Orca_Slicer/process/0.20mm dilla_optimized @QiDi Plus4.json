@@ -64,8 +64,6 @@
     "sparse_infill_speed": "250",
     "staggered_inner_seams": "1",
     "support_line_width": "104%",
-    "support_object_first_layer_gap": "0.08",
-    "support_object_xy_distance": "0.1",
     "support_on_build_plate_only": "1",
     "support_remove_small_overhang": "0",
     "support_threshold_angle": "25",
