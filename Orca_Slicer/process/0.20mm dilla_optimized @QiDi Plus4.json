@@ -67,7 +67,6 @@
     "support_on_build_plate_only": "1",
     "support_remove_small_overhang": "0",
     "support_threshold_angle": "25",
-    "support_top_z_distance": "0.05",
     "support_type": "normal(auto)",
     "thick_internal_bridges": "0",
     "top_solid_infill_flow_ratio": "1.03",
