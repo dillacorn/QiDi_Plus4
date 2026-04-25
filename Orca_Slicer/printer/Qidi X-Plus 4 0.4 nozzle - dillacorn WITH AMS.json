@@ -279,10 +279,10 @@
     "wrapping_detection_layers": "20",
     "wrapping_exclude_area": [],
     "z_hop": [
-        "0"
+        "0.4"
     ],
     "z_hop_types": [
-        "Normal Lift"
+        "Auto Lift"
     ],
     "z_offset": "0"
 }
