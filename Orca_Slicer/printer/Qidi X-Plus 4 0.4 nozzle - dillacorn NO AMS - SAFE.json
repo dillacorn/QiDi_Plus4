@@ -167,7 +167,7 @@
         "0.08"
     ],
     "min_resonance_avoidance_speed": "70",
-    "name": "Qidi X-Plus 4 0.4 nozzle - dillacorn NO AMS",
+    "name": "Qidi X-Plus 4 0.4 nozzle - dillacorn NO AMS - SAFE",
     "nozzle_diameter": [
         "0.4"
     ],
@@ -204,7 +204,7 @@
     ],
     "printer_model": "Qidi X-Plus 4",
     "printer_notes": "",
-    "printer_settings_id": "Qidi X-Plus 4 0.4 nozzle - dillacorn NO AMS",
+    "printer_settings_id": "Qidi X-Plus 4 0.4 nozzle - dillacorn NO AMS - SAFE",
     "printer_structure": "undefine",
     "printer_technology": "FFF",
     "printer_variant": "0.4",
@@ -279,10 +279,10 @@
     "wrapping_detection_layers": "20",
     "wrapping_exclude_area": [],
     "z_hop": [
-        "0"
+        "0.4"
     ],
     "z_hop_types": [
-        "Normal Lift"
+        "Auto Lift"
     ],
     "z_offset": "0"
 }
