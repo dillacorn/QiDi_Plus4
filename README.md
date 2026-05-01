@@ -13,6 +13,7 @@ My Orca Slicer settings for the QiDi Plus4, with QiDi Box support and Klipper `g
 - `INIT_MAPPING_VALUE` is related to QiDi Box behavior.
 - A separate manual spool profile is optional, but it helps prevent mistakes.
 - If spool is unraveling in QiDi Box AMS check your rollers. QiDi Box essentially ruined a spool because roller wasn't rolling smoothly.. resolved by swapping rollers around, they pull out easily.
+- If printing TPU 95A slow down to 70-50% in Fluidd web interface.
 
 ## Z-offset note
 
