@@ -9,36 +9,9 @@ My Orca Slicer settings for the QiDi Plus4, with QiDi Box support and Klipper `g
 - For mixed temperature swaps, manual unload and manual load is the safest method.
 - If you manually extract a high temp filament that is linked to the QiDi Box, also unload it from the QiDi Box afterward.
 - If you want to print from a manual spool while the QiDi Box is still connected, start the print from the printer screen and disable QiDi Box there.
-- `INIT_MAPPING_VALUE` is related to QiDi Box behavior.
 - A separate manual spool profile is optional, but it helps prevent mistakes.
 - If a spool is unraveling in the QiDi Box AMS, check your rollers. QiDi Box essentially ruined a spool because a roller was not rolling smoothly. I resolved it by swapping rollers around; they pull out easily.
 - If printing TPU 95A, slow down to 70–50% in the Fluidd web interface.
-
-## AMS loaded tool tracking
-
-This setup leaves AMS filament loaded after a successful AMS print. If you load or unload filament from the printer screen, update the tracked tool manually before the next AMS print.
-
-Tool mapping:
-
-- Roll 1 = `VALUE=0`
-- Roll 2 = `VALUE=1`
-- Roll 3 = `VALUE=2`
-- Roll 4 = `VALUE=3`
-- Unknown / nothing loaded = `VALUE=-1`
-
-Commands:
-
-`SAVE_VARIABLE VARIABLE=ams_loaded_tool VALUE=0` = roll 1 loaded  
-`SAVE_VARIABLE VARIABLE=ams_loaded_tool VALUE=1` = roll 2 loaded  
-`SAVE_VARIABLE VARIABLE=ams_loaded_tool VALUE=2` = roll 3 loaded  
-`SAVE_VARIABLE VARIABLE=ams_loaded_tool VALUE=3` = roll 4 loaded  
-`SAVE_VARIABLE VARIABLE=ams_loaded_tool VALUE=-1` = unknown / nothing loaded
-
-Example: if roll 1 is currently loaded, run:
-
-`SAVE_VARIABLE VARIABLE=ams_loaded_tool VALUE=0`
-
-Use the `NO AMS` Orca profile for external spool printing. That profile should use `AMS=0` and clear tracking with `VALUE=-1`.
 
 ## Z-offset note
 
@@ -107,6 +80,8 @@ I recommend printing these mods in ASA.
   Note: remove the metal ring from the inlet first. Push the Bowden tube fully through the M6 nut and up to the entry point. While installing the part, hold the fitting release collar and press carefully to avoid bending or damaging the Bowden tube.
 - [(Almost) Universal Spool Weight](https://www.printables.com/model/1385589-almost-universal-spool-weight-for-qidibox-mmu-unit#required-additional-parts)  
   Note: If your spool is too light or the filament is not taut enough, you may experience feeding issues. I’ve found that adding weight to the spool can improve automatic loading success and may be necessary depending on the roll and remaining filament weight. Print 4 of these, use an M6 bolt to close off the entry hole, and fill them with 4.5 mm BBs. I recommend starting around 200–300 g total added weight, then increasing only if needed.
+- [PTFE Guide Clip](https://www.printables.com/model/1462946-qidi-q2qidi-plus-4-ptfe-guide-clip/remixes)
+  Note: Helps keep filament inline with extruder feeding.
 
 ### Cooling and exhaust mods
 
