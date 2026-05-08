@@ -27,7 +27,7 @@ My Orca Slicer settings for the QiDi Plus4, with QiDi Box support and Klipper `g
 
 ### TPU note
 
-- If printing TPU 95A, slow down to 70–50% in the Fluidd web interface.
+- If printing TPU 95A, slow down to 50% in the Fluidd web interface.
 
 ## Z-offset note
 
