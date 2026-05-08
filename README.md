@@ -4,13 +4,29 @@ My Orca Slicer settings for the QiDi Plus4, with QiDi Box support and Klipper `g
 
 ## Important warnings
 
+### Filament temperature swaps
+
 - Be careful when switching from high temperature filaments to lower temperature filaments.
-- The cutter can leave high temp filament in the hotend. If you then feed a lower temp filament, it can jam.
+- The cutter can leave high temp filament in the hotend.
+- Feeding lower temp filament after that can cause a jam.
 - For mixed temperature swaps, manual unload and manual load is the safest method.
-- If you manually extract a high temp filament that is linked to the QiDi Box, also unload it from the QiDi Box afterward.
-- If you want to print from a manual spool while the QiDi Box is still connected, start the print from the printer screen and disable QiDi Box there.
+- If you manually extract high temp filament that is linked to the QiDi Box, also unload it from the QiDi Box afterward.
+
+### Manual spool / NO AMS printing
+
+- For manual spool printing while the QiDi Box is connected, use the `NO AMS` Orca printer profile.
+- The `NO AMS` profile uses `AMS=0`, skips QiDi Box startup logic, and does not call `T0`.
+- Without the `NO AMS` profile, start the print from the printer screen and disable QiDi Box there.
 - A separate manual spool profile is optional, but it helps prevent mistakes.
-- If a spool is unraveling in the QiDi Box AMS, check your rollers. QiDi Box essentially ruined a spool because a roller was not rolling smoothly. I resolved it by swapping rollers around; they pull out easily.
+
+### QiDi Box / AMS notes
+
+- If a spool is unraveling in the QiDi Box AMS, check your rollers.
+- QiDi Box essentially ruined one of my spools because a roller was not rolling smoothly.
+- I resolved it by swapping rollers around. They pull out easily.
+
+### TPU note
+
 - If printing TPU 95A, slow down to 70–50% in the Fluidd web interface.
 
 ## Z-offset note
