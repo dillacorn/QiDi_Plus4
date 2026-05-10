@@ -2,6 +2,12 @@
     "chamber_temperature": [
         "55"
     ],
+    "complete_print_exhaust_fan_speed": [
+        "100"
+    ],
+    "during_print_exhaust_fan_speed": [
+        "70"
+    ],
     "filament_extruder_variant": [
         "Direct Drive Standard"
     ],

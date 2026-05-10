@@ -1,9 +1,15 @@
 {
+    "activate_air_filtration": [
+        "1"
+    ],
     "chamber_temperature": [
         "55"
     ],
     "compatible_printers": [
         "Qidi X-Plus 4 0.4 nozzle"
+    ],
+    "complete_print_exhaust_fan_speed": [
+        "100"
     ],
     "filament_extruder_variant": [
         "Direct Drive Standard"
