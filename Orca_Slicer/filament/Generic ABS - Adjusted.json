@@ -1,0 +1,27 @@
+{
+    "chamber_temperature": [
+        "55"
+    ],
+    "filament_extruder_variant": [
+        "Direct Drive Standard"
+    ],
+    "filament_settings_id": [
+        "Generic ABS - Adjusted"
+    ],
+    "from": "User",
+    "hot_plate_temp": [
+        "100"
+    ],
+    "hot_plate_temp_initial_layer": [
+        "100"
+    ],
+    "inherits": "Qidi Generic ABS @Qidi X-Plus 4 0.4 nozzle",
+    "name": "Generic ABS - Adjusted",
+    "nozzle_temperature": [
+        "260"
+    ],
+    "nozzle_temperature_initial_layer": [
+        "260"
+    ],
+    "version": "2.3.2.60"
+}
