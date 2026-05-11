@@ -11,18 +11,21 @@
     "complete_print_exhaust_fan_speed": [
         "100"
     ],
+    "during_print_exhaust_fan_speed": [
+        "20"
+    ],
     "filament_extruder_variant": [
         "Direct Drive Standard"
     ],
     "filament_settings_id": [
-        "Generic ASA - Adjusted"
+        "ASA w/ Duct Outside"
     ],
     "from": "User",
     "hot_plate_temp_initial_layer": [
         "100"
     ],
     "inherits": "Generic ASA @System",
-    "name": "Generic ASA - Adjusted",
+    "name": "ASA w/ Duct Outside",
     "nozzle_temperature_range_low": [
         "260"
     ],

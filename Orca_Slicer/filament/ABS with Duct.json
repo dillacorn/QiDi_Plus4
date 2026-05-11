@@ -1,0 +1,48 @@
+{
+    "chamber_temperature": [
+        "55"
+    ],
+    "complete_print_exhaust_fan_speed": [
+        "100"
+    ],
+    "during_print_exhaust_fan_speed": [
+        "20"
+    ],
+    "enable_pressure_advance": [
+        "0"
+    ],
+    "fan_cooling_layer_time": [
+        "35"
+    ],
+    "filament_extruder_variant": [
+        "Direct Drive Standard"
+    ],
+    "filament_max_volumetric_speed": [
+        "12"
+    ],
+    "filament_settings_id": [
+        "ABS w/ Duct Outside"
+    ],
+    "from": "User",
+    "hot_plate_temp": [
+        "100"
+    ],
+    "hot_plate_temp_initial_layer": [
+        "100"
+    ],
+    "inherits": "Qidi Generic ABS @Qidi X-Plus 4 0.4 nozzle",
+    "name": "ABS w/ Duct Outside",
+    "nozzle_temperature": [
+        "260"
+    ],
+    "nozzle_temperature_initial_layer": [
+        "260"
+    ],
+    "slow_down_layer_time": [
+        "10"
+    ],
+    "slow_down_min_speed": [
+        "10"
+    ],
+    "version": "2.3.2.60"
+}
