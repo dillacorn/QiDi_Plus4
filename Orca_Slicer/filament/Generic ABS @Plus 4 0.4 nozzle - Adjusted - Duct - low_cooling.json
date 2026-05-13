@@ -9,10 +9,7 @@
         "20"
     ],
     "fan_max_speed": [
-        "30"
-    ],
-    "fan_min_speed": [
-        "0"
+        "40"
     ],
     "filament_extruder_variant": [
         "Direct Drive Standard"
@@ -42,10 +39,7 @@
         "260"
     ],
     "overhang_fan_speed": [
-        "30"
-    ],
-    "reduce_fan_stop_start_freq": [
-        "0"
+        "60"
     ],
     "support_material_interface_fan_speed": [
         "0"
