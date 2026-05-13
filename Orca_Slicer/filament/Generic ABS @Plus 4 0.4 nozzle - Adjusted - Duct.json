@@ -1,12 +1,6 @@
 {
-    "activate_air_filtration": [
-        "1"
-    ],
     "chamber_temperature": [
         "55"
-    ],
-    "compatible_printers": [
-        "Qidi X-Plus 4 0.4 nozzle"
     ],
     "complete_print_exhaust_fan_speed": [
         "100"
@@ -18,19 +12,22 @@
         "Direct Drive Standard"
     ],
     "filament_settings_id": [
-        "ASA w/ Duct Outside"
+        "Generic ABS @Plus 4 0.4 nozzle - Adjusted - Duct"
     ],
     "from": "User",
+    "hot_plate_temp": [
+        "100"
+    ],
     "hot_plate_temp_initial_layer": [
         "100"
     ],
-    "inherits": "Generic ASA @System",
-    "name": "ASA w/ Duct Outside",
-    "nozzle_temperature_range_low": [
+    "inherits": "Qidi Generic ABS @Qidi X-Plus 4 0.4 nozzle",
+    "name": "Generic ABS @Plus 4 0.4 nozzle - Adjusted - Duct",
+    "nozzle_temperature": [
         "260"
     ],
-    "slow_down_layer_time": [
-        "10"
+    "nozzle_temperature_initial_layer": [
+        "260"
     ],
-    "version": "2.3.1.10"
+    "version": "2.3.2.60"
 }
