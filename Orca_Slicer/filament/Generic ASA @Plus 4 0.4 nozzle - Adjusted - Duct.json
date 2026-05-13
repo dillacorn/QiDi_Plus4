@@ -29,5 +29,11 @@
     "nozzle_temperature_initial_layer": [
         "260"
     ],
+    "overhang_fan_speed": [
+        "30"
+    ],
+    "slow_down_layer_time": [
+        "8"
+    ],
     "version": "2.3.2.60"
 }
