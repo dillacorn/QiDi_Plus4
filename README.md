@@ -122,3 +122,26 @@ I recommend printing these mods in ASA.
 - [Chamber motherboard cover](https://www.printables.com/model/1040774-qidi-plus-4-rear-chamber-cover)
 - [Poop chute guide](https://www.printables.com/model/1019715-reloadeable-poop-bucket-for-qidi-x-plus-4/comments)  
   Note: I like the open poop chute guide from this model. I use it to catch purged filament and help it fall straight down into the bucket.
+
+## Clean room air / Corsi-Rosenthal Box
+
+For extra room air filtration, I recommend adding a DIY Corsi-Rosenthal Box near the printer area.
+
+This is not a replacement for the printer exhaust, HEPA filter, activated charcoal, or window duct setup listed above. A Corsi-Rosenthal Box is mainly for cleaning room air particles, dust, and general airborne particulate matter. Treat it as supplemental room filtration, especially when printing ASA / ABS.
+
+Put simply, it is a cheap, easy-to-build, high-airflow DIY air purifier.
+
+Useful resources:
+
+- [Corsi-Rosenthal Foundation build guide](https://corsirosenthalfoundation.org/resources/how-to-build-a-corsi-rosenthal-box-usa/)
+- [Build video](https://www.youtube.com/watch?v=gaQTYrisieA)
+- [3D printable Corsi-Rosenthal Box filter parts](https://makerworld.com/en/models/520688-corsi-rosenthal-box-filter#profileId-437127)
+
+Basic notes:
+
+- Use MERV 13 or better filters.
+- Make sure the airflow arrows on the filters point inward toward the fan.
+- Add a cardboard or printed shroud on the fan outlet side if the design supports it.
+- Do not point the fan directly at the printer enclosure if it causes drafts or chamber temperature instability.
+- Run it during and after ASA / ABS prints as extra room air cleanup.
+- For fumes, odor, and VOC reduction, keep using activated charcoal and/or exhaust ventilation.
