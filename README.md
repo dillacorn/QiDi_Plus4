@@ -134,7 +134,7 @@ Put simply, it is a cheap, easy-to-build, high-airflow DIY air purifier.
 Useful resources:
 
 - [Corsi-Rosenthal Foundation build guide](https://corsirosenthalfoundation.org/resources/how-to-build-a-corsi-rosenthal-box-usa/)
-- [Build video](https://www.youtube.com/watch?v=gaQTYrisieA)
+- [Scientific analysis / research video](https://www.youtube.com/watch?v=gaQTYrisieA)
 - [3D printable Corsi-Rosenthal Box filter parts](https://makerworld.com/en/models/520688-corsi-rosenthal-box-filter#profileId-437127)
 
 Basic notes:
