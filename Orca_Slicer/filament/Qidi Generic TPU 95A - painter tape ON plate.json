@@ -8,5 +8,8 @@
     "from": "User",
     "inherits": "Qidi Generic TPU 95A",
     "name": "Qidi Generic TPU 95A - painter tape ON plate",
+    "pressure_advance": [
+        "0.04"
+    ],
     "version": "2.3.2.60"
 }
