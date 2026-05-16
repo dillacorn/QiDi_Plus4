@@ -1,0 +1,12 @@
+{
+    "filament_extruder_variant": [
+        "Direct Drive Standard"
+    ],
+    "filament_settings_id": [
+        "Qidi Generic TPU 95A - painter tape ON plate"
+    ],
+    "from": "User",
+    "inherits": "Qidi Generic TPU 95A",
+    "name": "Qidi Generic TPU 95A - painter tape ON plate",
+    "version": "2.3.2.60"
+}

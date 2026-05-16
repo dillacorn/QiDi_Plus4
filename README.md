@@ -25,10 +25,6 @@ My Orca Slicer settings for the QiDi Plus4, with QiDi Box support and Klipper `g
 - QiDi Box essentially ruined one of my spools because a roller was not rolling smoothly.
 - I resolved it by swapping rollers around. They pull out easily.
 
-### TPU note
-
-- If printing TPU 95A, slow down to 50% in the Fluidd web interface.
-
 ## Z-offset note
 
 In `gcode_macro.cfg` in the Fluidd UI, the default `get_zoffset` value is:
