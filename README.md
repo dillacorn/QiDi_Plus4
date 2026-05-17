@@ -98,7 +98,7 @@ I recommend printing these mods in ASA.
 ### Cooling and exhaust mods
 
 - [8038 exhaust fan shroud](https://www.printables.com/model/1560525-qidi-plus-4-8038-exhaust-fan-shroud)
-- [80x80x38mm fan](https://www.amazon.com/YINETTECH-V35132-16F-V35132-55RA-Compatible-80x80x38mm/dp/B0GJNWFL3Z)
+- [80x80x38mm fan](https://www.amazon.com/gp/product/B09L61X2H9)
 - [Hex mainboard cover for 80mm fan](https://www.printables.com/model/1146502-qidi-plus-4-hex-mainboard-cover-for-80mm-fan-with)
 - [Fan grille](https://www.amazon.com/dp/B01CU72VS4)
 
