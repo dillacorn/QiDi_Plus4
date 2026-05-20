@@ -131,7 +131,7 @@ I recommend doing this only after upgrading the mainboard cooling fan / board co
 
 This is optional, but may help if you use webcam streaming, timelapse, Obico, or other monitoring services.
 
-### Timelapse recommendation
+### Timelapse Configuration
 
 I disable Orca Slicer / Fluidd printer-side timelapse and use a self-hosted Obico Server for timelapse instead.
 
@@ -145,6 +145,27 @@ My preferred setup is:
 - Self-hosted Obico Server timelapse: enabled
 
 This keeps the Plus4 focused on printing while the Obico Server handles timelapse recording.
+
+If you still want printer-side timelapse and are willing to accept the risk of a failed `MCU: Timer Too Close` shutdown, I recommend using a lighter layer-change setup instead of taking a screenshot on every single layer.
+
+This captures one frame every 5 completed layers instead of every layer:
+
+```gcode
+G92 E0
+SET_PRINT_STATS_INFO CURRENT_LAYER={layer_num + 1}
+
+; lightweight timelapse
+; captures every 5th layer only
+; final finished-part frame goes in End G-code after the head parks
+{if (((layer_num + 1) % 5) == 0)}TIMELAPSE_TAKE_FRAME{endif}
+```
+
+For a final finished-print frame, add this to End G-code after the toolhead parks:
+
+```gcode
+; final finished-print timelapse frame
+TIMELAPSE_TAKE_FRAME
+```
 
 ## Clean room air / Corsi-Rosenthal Box
 
