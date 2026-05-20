@@ -52,6 +52,14 @@ A single `4 ft x 4 ft` panel is enough for the listed cut sizes.
 
 Used for the box frame.
 
+The model uses `5/8 in x 5/8 in` square wooden dowels.
+
+- [Home Depot - Waddell 5/8 in x 36 in square wood dowel](https://www.homedepot.com/p/Waddell-Pine-Square-Dowel-36-in-x-0-625-in-Sanded-and-Ready-for-Finishing-Versatile-Wooden-Rod-for-DIY-Home-Projects-8210U/329566340)
+
+Buy quantity:
+
+- `36"` dowels x4
+
 Dowel cut list:
 
 - `22 3/8"` x4 long dowels
@@ -63,6 +71,8 @@ Decimal cut sizes:
 - `13.375"` x4 short dowels
 
 If using `36"` dowels, each dowel should provide one long piece and one short piece when accounting for a standard saw kerf.
+
+![5/8 square wood dowels](Pictures/x4_Dowels.png)
 
 ### Adjustable power adapter / fan power control
 
