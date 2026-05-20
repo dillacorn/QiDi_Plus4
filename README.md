@@ -119,6 +119,18 @@ I recommend printing these mods in ASA.
 - [Poop chute guide](https://www.printables.com/model/1019715-reloadeable-poop-bucket-for-qidi-x-plus-4/comments)  
   Note: I like the open poop chute guide from this model. I use it to catch purged filament and help it fall straight down into the bucket.
 
+## Performance Tuning
+
+The QiDi Community Plus4 Wiki has a system tuning guide that may help with repeatable `MCU: Timer Too Close` shutdowns.
+
+- [QiDi Plus4 System Tuning Guide](https://github.com/qidi-community/Plus4-Wiki/blob/main/content/system-tuning/README.md)
+
+The tuning script sets the printer host CPU to performance mode and adjusts CPU affinity so Klipper has less interference from other services.
+
+I recommend doing this only after upgrading the mainboard cooling fan / board cooling setup, since performance mode keeps the host CPU running at a higher speed.
+
+This is optional, but may help if you use webcam streaming, timelapse, Obico, or other monitoring services.
+
 ## Clean room air / Corsi-Rosenthal Box
 
 For extra room air filtration, I recommend adding a DIY Corsi-Rosenthal Box near the printer area.
