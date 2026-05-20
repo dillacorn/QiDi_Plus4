@@ -133,6 +133,8 @@ Useful resources:
 - [Scientific analysis / research video](https://www.youtube.com/watch?v=gaQTYrisieA)
 - [3D printable Corsi-Rosenthal Box filter parts](https://makerworld.com/en/models/520688-corsi-rosenthal-box-filter#profileId-437127)
 
+Box I'm planning to build: [CR_Box/README.md](https://github.com/dillacorn/QiDi_Plus4/blob/main/CR_Box/README.md)
+
 Basic notes:
 
 - Use MERV 13 or better filters.
