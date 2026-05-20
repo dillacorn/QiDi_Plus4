@@ -34,22 +34,35 @@ This is slightly thinner than the original model spec, but should fit a `6mm` pr
 
 Avoid plywood much thicker than `5.5mm`, since true `1/4 in` plywood can be close to `6mm` and may be tight in the printed slot.
 
-Cut list:
+Panel cut list:
 
-- `16" x 25"` x2
-- `16" x 16"` x2
+- `8.5" x 24 3/8"` x2 long panels
+- `8.5" x 15 3/8"` x2 short panels
+
+Decimal cut sizes for OptiCutter:
+
+- `8.5" x 24.375"` x2 long panels
+- `8.5" x 15.375"` x2 short panels
 
 A single `4 ft x 4 ft` panel is enough for the listed cut sizes.
 
-Simple cut layout:
-
-- Put both `16" x 25"` panels side by side.
-- Put both `16" x 16"` panels side by side below them.
-- Total used area is about `32" x 41"`.
-
-Before cutting, verify the model instructions and measure the printed slot with calipers.
-
 ![Underlayment plywood panel](Pictures/Underlayment_Plywood.png)
+
+### Wood dowels
+
+Used for the box frame.
+
+Dowel cut list:
+
+- `22 3/8"` x4 long dowels
+- `13 3/8"` x4 short dowels
+
+Decimal cut sizes:
+
+- `22.375"` x4 long dowels
+- `13.375"` x4 short dowels
+
+If using `36"` dowels, each dowel should provide one long piece and one short piece when accounting for a standard saw kerf.
 
 ### Adjustable power adapter / fan power control
 
@@ -74,6 +87,14 @@ Used as the main filter panels.
 - [Amazon - BNX 16x25x1 MERV 13 filter 4-pack](https://www.amazon.com/dp/B09XFKZB2C/?psc=1)
 
 ![16x25x1 MERV 13 filter](Pictures/16x25x1_MERV-13.png)
+
+## Cutting notes
+
+Use a cutting optimizer such as OptiCutter to position the panel and dowel cuts.
+
+Remember to include the width of your saw blade, also called the kerf.
+
+Measure twice, cut once.
 
 ## Notes
 
