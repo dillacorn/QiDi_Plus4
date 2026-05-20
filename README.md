@@ -131,6 +131,21 @@ I recommend doing this only after upgrading the mainboard cooling fan / board co
 
 This is optional, but may help if you use webcam streaming, timelapse, Obico, or other monitoring services.
 
+### Timelapse recommendation
+
+I disable Orca Slicer / Fluidd printer-side timelapse and use a self-hosted Obico Server for timelapse instead.
+
+This is not just for saving printer storage. Printer-side timelapse can add extra CPU, camera, and file-writing load during a print. In rare cases, especially when combined with webcam streaming, Obico monitoring, or complex G-code, that extra load may contribute to `MCU: Timer Too Close` shutdowns.
+
+My preferred setup is:
+
+- Orca Slicer timelapse G-code: disabled
+- Layer-change `TIMELAPSE_TAKE_FRAME`: removed
+- Fluidd / Moonraker printer-side timelapse: disabled
+- Self-hosted Obico Server timelapse: enabled
+
+This keeps the Plus4 focused on printing while the Obico Server handles timelapse recording.
+
 ## Clean room air / Corsi-Rosenthal Box
 
 For extra room air filtration, I recommend adding a DIY Corsi-Rosenthal Box near the printer area.
