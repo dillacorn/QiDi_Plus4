@@ -1,5 +1,7 @@
 # QiDi_Plus4
 
+<sub>Tested with QiDi Plus4 firmware version 1.7.3.</sub>
+
 My Orca Slicer settings for the QiDi Plus4, with QiDi Box support and Klipper `gcode_macro.cfg` / `printer.cfg` adjustments that can be changed in the Fluidd UI.
 
 ## Important warnings
