@@ -29,6 +29,8 @@ My Orca Slicer settings for the QiDi Plus4, with QiDi Box support and Klipper `g
 
 ## Z-offset note
 
+<sub>Source / credit: [Kuo Steps for Improving Z-Offset Reliability](https://github.com/qidi-community/Plus4-Wiki/blob/main/content%2FKuo-Steps-for-Improving-Z-Offset-Reliability%2FREADME.md)</sub>
+
 In `gcode_macro.cfg` in the Fluidd UI, the default `get_zoffset` value is:
 
 ```jinja
