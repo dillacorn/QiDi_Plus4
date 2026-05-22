@@ -235,7 +235,7 @@
         "0"
     ],
     "retract_when_changing_layer": [
-        "0"
+        "1"
     ],
     "retraction_distances_when_cut": [
         "18"
@@ -269,7 +269,7 @@
     "use_relative_e_distances": "1",
     "version": "2.3.2.60",
     "wipe": [
-        "0"
+        "1"
     ],
     "wipe_distance": [
         "1"
@@ -279,10 +279,10 @@
     "wrapping_detection_layers": "20",
     "wrapping_exclude_area": [],
     "z_hop": [
-        "0"
+        "0.4"
     ],
     "z_hop_types": [
-        "Normal Lift"
+        "Auto Lift"
     ],
     "z_offset": "0"
 }
