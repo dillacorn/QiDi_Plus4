@@ -135,15 +135,28 @@ I recommend doing this only after upgrading the mainboard cooling fan / board co
 
 This is optional, but may help if you use webcam streaming, timelapse, Obico, or other monitoring services.
 
-If you are using Obico, I strongly recommend removing the printer-side timelapse G-code from your Orca Slicer printer profile.
+## Obico / timelapse note
 
-In Orca Slicer, go to:
+I removed the printer-side timelapse G-code from my Orca Slicer printer profiles.
+
+If you use Obico, webcam streaming, Fluidd, or any other monitoring service, I strongly recommend leaving Orca's printer-side timelapse G-code empty unless you specifically need layer-change snapshots.
+
+In Orca Slicer:
 
 `Printer profile > Machine G-code > Time lapse G-code`
 
-Clear the Time lapse G-code box so Orca does not insert `TIMELAPSE_TAKE_FRAME` into the sliced G-code.
+Leave the **Time lapse G-code** box empty.
 
-Obico Server timelapse can still record timelapses without relying on the printer-side timelapse macro. This avoids extra screenshot/camera/file-writing load during the print and reduces the chance of rare `MCU: Timer Too Close` shutdowns.
+This prevents Orca from inserting `TIMELAPSE_TAKE_FRAME` into every sliced G-code file. On the QiDi Plus4, this reduces unnecessary camera/screenshot/file-writing activity during prints, lowers extra host CPU load, and may help reduce the chance of rare `MCU: Timer Too Close` shutdowns. It also avoids extra write activity on the printer's internal eMMC storage.
+
+If you insist on using layer-change timelapse G-code, use the lighter version below instead:
+
+```gcode
+{if timelapse_type == 1} ; timelapse with wipe tower
+TIMELAPSE_TAKE_FRAME
+{elsif timelapse_type == 0} ; timelapse without wipe tower
+TIMELAPSE_TAKE_FRAME
+{endif}
 
 ## Clean room air / Corsi-Rosenthal Box
 

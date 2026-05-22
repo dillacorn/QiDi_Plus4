@@ -260,7 +260,7 @@
     "thumbnails": "272x272/PNG, 96x96/PNG",
     "thumbnails_format": "PNG",
     "time_cost": "0",
-    "time_lapse_gcode": "{if timelapse_type == 1} ; timelapse with wipe tower\nG92 E0\nG1 E-[retraction_length] F1800\nG2 Z{layer_z + 0.4} I0.86 J0.86 P1 F20000 ; spiral lift a little\nG1 Y304 F20000\nG1 X95 F20000\nG92 E0\nM400\nTIMELAPSE_TAKE_FRAME\nG1 Y324 F5000\nG1 E[retraction_length] F300\nG1 X65 F5000\nG1 Y290 F20000\n{elsif timelapse_type == 0} ; timelapse without wipe tower\nTIMELAPSE_TAKE_FRAME\n{endif}",
+    "time_lapse_gcode": "",
     "travel_slope": [
         "3"
     ],
