@@ -157,6 +157,7 @@ TIMELAPSE_TAKE_FRAME
 {elsif timelapse_type == 0} ; timelapse without wipe tower
 TIMELAPSE_TAKE_FRAME
 {endif}
+```
 
 ## Clean room air / Corsi-Rosenthal Box
 
