@@ -135,6 +135,16 @@ I recommend doing this only after upgrading the mainboard cooling fan / board co
 
 This is optional, but may help if you use webcam streaming, timelapse, Obico, or other monitoring services.
 
+If you are using Obico, I strongly recommend removing the printer-side timelapse G-code from your Orca Slicer printer profile.
+
+In Orca Slicer, go to:
+
+`Printer profile > Machine G-code > Time lapse G-code`
+
+Clear the Time lapse G-code box so Orca does not insert `TIMELAPSE_TAKE_FRAME` into the sliced G-code.
+
+Obico Server timelapse can still record timelapses without relying on the printer-side timelapse macro. This avoids extra screenshot/camera/file-writing load during the print and reduces the chance of rare `MCU: Timer Too Close` shutdowns.
+
 ## Clean room air / Corsi-Rosenthal Box
 
 For extra room air filtration, I recommend adding a DIY Corsi-Rosenthal Box near the printer area.
