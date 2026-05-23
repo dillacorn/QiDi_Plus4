@@ -55,6 +55,7 @@
     "slice_closing_radius": "0.043",
     "small_area_infill_flow_compensation": "1",
     "small_perimeter_threshold": "0",
+    "solid_infill_direction": "0",
     "sparse_infill_acceleration": "8800",
     "sparse_infill_density": "10%",
     "sparse_infill_line_width": "104%",
