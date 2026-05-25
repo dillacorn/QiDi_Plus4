@@ -79,7 +79,7 @@
     "travel_jerk": "8",
     "travel_speed": "450",
     "tree_support_branch_angle": "60",
-    "tree_support_branch_diameter": "3",
+    "tree_support_branch_diameter": "5",
     "tree_support_branch_distance": "1",
     "tree_support_brim_width": "5",
     "tree_support_wall_count": "2",
