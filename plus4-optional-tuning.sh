@@ -7,6 +7,7 @@ set -euo pipefail
 # Usage:
 #   chmod +x /home/mks/plus4-optional-tuning.sh
 #   /home/mks/plus4-optional-tuning.sh apply
+#   /home/mks/plus4-optional-tuning.sh dry-run
 #   /home/mks/plus4-optional-tuning.sh check
 #   /home/mks/plus4-optional-tuning.sh revert
 
@@ -386,7 +387,7 @@ toggle_menu_item() {
 
 checkbox_menu() {
     if [ ! -t 0 ]; then
-        echo "Interactive apply requires a terminal."
+        echo "Interactive mode requires a terminal."
         exit 1
     fi
 
@@ -425,7 +426,7 @@ checkbox_menu() {
                 ;;
             q|Q)
                 clear
-                echo "Aborted. No changes applied."
+                echo "Aborted. No changes selected."
                 exit 0
                 ;;
             j|J)
@@ -478,19 +479,7 @@ checkbox_menu() {
     DO_WIFI_DISABLE="${MENU_SELECTED[5]}"
 }
 
-interactive_apply() {
-    require_root "$ACTION"
-
-    checkbox_menu
-
-    if [ "$DO_XINDI_LIMIT" = "1" ]; then
-        XINDI_CPU_QUOTA="$(ask_value "xindi CPU quota" "$XINDI_CPU_QUOTA")"
-    fi
-
-    if [ "$DO_OBICO_LIMIT" = "1" ]; then
-        OBICO_CPU_QUOTA="$(ask_value "Obico CPU quota" "$OBICO_CPU_QUOTA")"
-    fi
-
+show_plan() {
     echo
     echo "===== PLAN ====="
     [ "$DO_CPU_PERFORMANCE" = "1" ] && echo "- Force CPU governor to performance"
@@ -502,11 +491,146 @@ interactive_apply() {
     echo "- Backup current files before changes"
     echo "- Restart only touched services"
     echo
+}
+
+show_dry_run_details() {
+    echo "===== DRY RUN DETAILS ====="
+
+    if [ "$DO_CPU_PERFORMANCE" = "1" ]; then
+        cat <<EOF
+
+Would write:
+/usr/local/sbin/plus4-cpu-performance
+/etc/systemd/system/plus4-cpu-performance.service
+
+Would run:
+systemctl daemon-reload
+systemctl enable plus4-cpu-performance.service
+systemctl restart plus4-cpu-performance.service
+EOF
+    fi
+
+    if [ "$DO_SERVICE_WEIGHTS" = "1" ]; then
+        cat <<EOF
+
+Would write:
+/etc/systemd/system/klipper.service.d/override.conf
+/etc/systemd/system/moonraker.service.d/override.conf
+/etc/systemd/system/webcamd.service.d/override.conf
+/etc/systemd/system/nginx.service.d/override.conf
+
+Would restart:
+klipper.service
+moonraker.service
+webcamd.service
+nginx.service
+EOF
+    fi
+
+    if [ "$DO_XINDI_LIMIT" = "1" ]; then
+        cat <<EOF
+
+Would write:
+/etc/systemd/system/makerbase-client.service.d/override.conf
+
+Contents:
+[Service]
+Nice=5
+CPUAccounting=true
+CPUWeight=10
+CPUQuota=${XINDI_CPU_QUOTA}
+CPUAffinity=3
+
+Would restart:
+makerbase-client.service
+EOF
+    fi
+
+    if [ "$DO_OBICO_LIMIT" = "1" ]; then
+        cat <<EOF
+
+Would write:
+/etc/systemd/system/moonraker-obico.service.d/override.conf
+
+Contents:
+[Service]
+Nice=5
+CPUAccounting=true
+CPUWeight=30
+CPUQuota=${OBICO_CPU_QUOTA}
+
+Would restart:
+moonraker-obico.service
+EOF
+    fi
+
+    if [ "$DO_OBICO_STREAMING" = "1" ]; then
+        cat <<EOF
+
+Would edit:
+/home/mks/printer_data/config/moonraker-obico.cfg
+
+Would set:
+[webcam]
+disable_video_streaming = True
+
+[logging]
+level = INFO
+
+Would restart:
+moonraker-obico.service
+EOF
+    fi
+
+    if [ "$DO_WIFI_DISABLE" = "1" ]; then
+        cat <<EOF
+
+Would run, only if Ethernet is active and SSH is not using wlan0:
+systemctl disable makerbase-wlan0.service
+systemctl stop makerbase-wlan0.service
+ip link set wlan0 down
+EOF
+    fi
+
+    cat <<EOF
+
+Would create backup under:
+$BACKUP_ROOT/<timestamp>
+
+No files were written.
+No services were restarted.
+No network interfaces were changed.
+EOF
+}
+
+select_options() {
+    checkbox_menu
+
+    if [ "$DO_XINDI_LIMIT" = "1" ]; then
+        XINDI_CPU_QUOTA="$(ask_value "xindi CPU quota" "$XINDI_CPU_QUOTA")"
+    fi
+
+    if [ "$DO_OBICO_LIMIT" = "1" ]; then
+        OBICO_CPU_QUOTA="$(ask_value "Obico CPU quota" "$OBICO_CPU_QUOTA")"
+    fi
 
     if [ "$DO_CPU_PERFORMANCE$DO_SERVICE_WEIGHTS$DO_XINDI_LIMIT$DO_OBICO_LIMIT$DO_OBICO_STREAMING$DO_WIFI_DISABLE" = "000000" ]; then
         echo "Nothing selected. Exiting."
         exit 0
     fi
+}
+
+dry_run() {
+    select_options
+    show_plan
+    show_dry_run_details
+}
+
+interactive_apply() {
+    require_root "$ACTION"
+
+    select_options
+    show_plan
 
     if ! ask_yes_no "Commit/apply these changes now?" "n"; then
         echo "Aborted. No changes applied."
@@ -669,6 +793,9 @@ case "$ACTION" in
     apply)
         interactive_apply
         ;;
+    dry-run)
+        dry_run
+        ;;
     check)
         check_state
         ;;
@@ -676,7 +803,7 @@ case "$ACTION" in
         revert_tuning
         ;;
     *)
-        echo "Usage: $0 {apply|check|revert}"
+        echo "Usage: $0 {apply|dry-run|check|revert}"
         exit 2
         ;;
 esac
