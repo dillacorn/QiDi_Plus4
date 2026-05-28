@@ -5,21 +5,22 @@ set -euo pipefail
 # Interactive QiDi Plus4 optional host-load tuning for reducing Timer Too Close / MCU timeout risk.
 #
 # Usage:
-#   chmod +x /home/mks/plus4-optional-tuning.sh
+#   /home/mks/plus4-optional-tuning.sh
 #   /home/mks/plus4-optional-tuning.sh apply
 #   /home/mks/plus4-optional-tuning.sh dry-run
 #   /home/mks/plus4-optional-tuning.sh undo
 #   /home/mks/plus4-optional-tuning.sh undo-dry-run
-#   /home/mks/plus4-optional-tuning.sh check
+#   /home/mks/plus4-optional-tuning.sh status
 #
-# Aliases:
-#   revert = undo
+# Default action with no argument:
+#   apply
 
-ACTION="${1:-check}"
+ACTION="${1:-apply}"
 
 BACKUP_ROOT="/root/plus4-optional-tuning-backups"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 
+DO_OLD_TUNING_DISABLE=0
 DO_CPU_PERFORMANCE=0
 DO_SERVICE_WEIGHTS=0
 DO_STRICT_AFFINITY=0
@@ -105,6 +106,7 @@ backup_current_state() {
     backup_path "/usr/local/sbin/plus4-cpu-performance" "$backup_dir"
     backup_path "/home/mks/printer_data/config/moonraker-obico.cfg" "$backup_dir"
     backup_path "/etc/default/cpufrequtils" "$backup_dir"
+    backup_path "/etc/init.d/tuning" "$backup_dir"
 
     echo "$backup_dir" > "$BACKUP_ROOT/latest"
     echo "Backup saved: $backup_dir"
@@ -116,7 +118,7 @@ add_restart_service() {
 
     service_exists "$unit" || return 0
 
-    for existing in "${RESTART_SERVICES[@]:-}"; do
+    for existing in "${RESTART_SERVICES[@]}"; do
         if [ "$existing" = "$unit" ]; then
             return 0
         fi
@@ -152,6 +154,22 @@ write_if_changed() {
     rm -f "$tmp"
     echo "Updated: $dest"
     return 0
+}
+
+old_tuning_present() {
+    [ -x /etc/init.d/tuning ]
+}
+
+old_tuning_enabled() {
+    find /etc/rc*.d -maxdepth 1 -type l -name "S*tuning" 2>/dev/null | grep -q .
+}
+
+old_tuning_disabled() {
+    if ! old_tuning_present; then
+        return 0
+    fi
+
+    ! old_tuning_enabled
 }
 
 all_governors_performance() {
@@ -211,7 +229,13 @@ obico_streaming_disabled() {
     local cfg="/home/mks/printer_data/config/moonraker-obico.cfg"
 
     [ -f "$cfg" ] \
-        && grep -Eiq '^[[:space:]]*disable_video_streaming[[:space:]]*=[[:space:]]*True[[:space:]]*$' "$cfg" \
+        && grep -Eiq '^[[:space:]]*disable_video_streaming[[:space:]]*=[[:space:]]*True[[:space:]]*$' "$cfg"
+}
+
+obico_logging_info() {
+    local cfg="/home/mks/printer_data/config/moonraker-obico.cfg"
+
+    [ -f "$cfg" ] \
         && grep -Eiq '^[[:space:]]*level[[:space:]]*=[[:space:]]*INFO[[:space:]]*$' "$cfg"
 }
 
@@ -237,9 +261,47 @@ wifi_disable_applied() {
     [ "$wlan_down" -eq 1 ] && [ "$service_quiet" -eq 1 ]
 }
 
+apply_disable_old_tuning() {
+    if ! old_tuning_present; then
+        echo "Already done: old community tuning script is not installed"
+        return 0
+    fi
+
+    if old_tuning_disabled; then
+        echo "Already done: old community tuning boot script is disabled"
+        return 0
+    fi
+
+    if command -v update-rc.d >/dev/null 2>&1; then
+        update-rc.d tuning disable
+        echo "Disabled: old community /etc/init.d/tuning boot script"
+    else
+        echo "Cannot disable old tuning automatically: update-rc.d not found"
+    fi
+}
+
+undo_disable_old_tuning() {
+    if ! old_tuning_present; then
+        echo "Not installed: old community tuning script"
+        return 0
+    fi
+
+    if old_tuning_enabled; then
+        echo "Already enabled: old community tuning boot script"
+        return 0
+    fi
+
+    if command -v update-rc.d >/dev/null 2>&1; then
+        update-rc.d tuning enable
+        echo "Re-enabled: old community /etc/init.d/tuning boot script"
+    else
+        echo "Cannot re-enable old tuning automatically: update-rc.d not found"
+    fi
+}
+
 install_cpu_performance_service() {
     if cpu_performance_applied; then
-        echo "Already applied: CPU performance governor"
+        echo "Already done: CPU performance governor service"
         return 0
     fi
 
@@ -280,12 +342,12 @@ EOF
 
 install_core_service_weights() {
     if [ "$DO_STRICT_AFFINITY" = "1" ] && strict_affinity_applied && core_weights_applied; then
-        echo "Already applied: strict CPU affinity and core service weights"
+        echo "Already done: strict CPU affinity and core service weights"
         return 0
     fi
 
     if [ "$DO_STRICT_AFFINITY" = "0" ] && core_weights_applied; then
-        echo "Already applied: core service CPU weights"
+        echo "Already done: core service CPU weights"
         return 0
     fi
 
@@ -357,7 +419,7 @@ EOF
 
 install_xindi_limit() {
     if xindi_limit_applied; then
-        echo "Already applied: xindi / makerbase-client limit"
+        echo "Already done: xindi / makerbase-client limit"
         return 0
     fi
 
@@ -376,12 +438,12 @@ EOF
 
 install_obico_limit() {
     if ! service_exists "moonraker-obico.service"; then
-        echo "Skipping Obico limit: moonraker-obico.service not found."
+        echo "Skipping: moonraker-obico.service not found"
         return 0
     fi
 
     if obico_limit_applied; then
-        echo "Already applied: Obico CPU limit"
+        echo "Already done: Obico CPU limit"
         return 0
     fi
 
@@ -401,12 +463,12 @@ patch_obico_streaming_disabled() {
     local cfg="/home/mks/printer_data/config/moonraker-obico.cfg"
 
     if [ ! -f "$cfg" ]; then
-        echo "Skipping Obico streaming config: $cfg not found."
+        echo "Skipping: $cfg not found"
         return 0
     fi
 
-    if obico_streaming_disabled; then
-        echo "Already applied: Obico live video streaming disabled and logging INFO"
+    if obico_streaming_disabled && obico_logging_info; then
+        echo "Already done: Obico live video streaming disabled and logging INFO"
         return 0
     fi
 
@@ -466,13 +528,19 @@ path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
 PY
 
     add_restart_service "moonraker-obico.service"
+    echo "Updated: Obico live video streaming disabled and logging INFO"
 }
 
 patch_obico_streaming_enabled() {
     local cfg="/home/mks/printer_data/config/moonraker-obico.cfg"
 
     if [ ! -f "$cfg" ]; then
-        echo "Skipping Obico streaming undo: $cfg not found."
+        echo "Skipping: $cfg not found"
+        return 0
+    fi
+
+    if ! grep -Eiq '^[[:space:]]*disable_video_streaming[[:space:]]*=[[:space:]]*True[[:space:]]*$' "$cfg"; then
+        echo "Already done: Obico live video streaming is enabled or not disabled by config"
         return 0
     fi
 
@@ -504,8 +572,6 @@ for _, idx in sections.items():
     if idx > sections["webcam"]:
         end = min(end, idx)
 
-changed = False
-
 for i in range(start, end):
     stripped = lines[i].strip()
     if not stripped or stripped.startswith("#") or "=" not in stripped:
@@ -513,21 +579,19 @@ for i in range(start, end):
 
     key = stripped.split("=", 1)[0].strip().lower()
     if key == "disable_video_streaming":
-        if lines[i] != "disable_video_streaming = False":
-            lines[i] = "disable_video_streaming = False"
-            changed = True
+        lines[i] = "disable_video_streaming = False"
         break
 
-if changed:
-    path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
 PY
 
     add_restart_service "moonraker-obico.service"
+    echo "Updated: Obico live video streaming enabled"
 }
 
 disable_wifi_if_safe() {
     if wifi_disable_applied; then
-        echo "Already applied: Wi-Fi service/interface disabled"
+        echo "Already done: Wi-Fi service/interface disabled"
         return 0
     fi
 
@@ -545,12 +609,12 @@ disable_wifi_if_safe() {
     fi
 
     if [ "$ssh_iface" = "wlan0" ]; then
-        echo "Skipping Wi-Fi disable: current SSH session appears to use wlan0."
+        echo "Skipping Wi-Fi disable: current SSH session appears to use wlan0"
         return 0
     fi
 
     if [ "$eth_has_ip" != "1" ]; then
-        echo "Skipping Wi-Fi disable: eth0 has no IPv4 address."
+        echo "Skipping Wi-Fi disable: eth0 has no IPv4 address"
         return 0
     fi
 
@@ -560,11 +624,12 @@ disable_wifi_if_safe() {
     fi
 
     ip link set wlan0 down 2>/dev/null || true
+    echo "Disabled: Wi-Fi service/interface"
 }
 
 undo_cpu_performance() {
     if [ ! -f /etc/systemd/system/plus4-cpu-performance.service ] && [ ! -f /usr/local/sbin/plus4-cpu-performance ]; then
-        echo "Not applied: CPU performance governor service"
+        echo "Already done: CPU performance governor service is not installed"
         return 0
     fi
 
@@ -578,6 +643,7 @@ undo_cpu_performance() {
 
 undo_core_service_weights() {
     local removed=0
+    local file=""
 
     for file in \
         /etc/systemd/system/klipper.service.d/override.conf \
@@ -599,7 +665,7 @@ undo_core_service_weights() {
         2>/dev/null || true
 
     if [ "$removed" -eq 0 ]; then
-        echo "Not applied: core service weights / strict affinity"
+        echo "Already done: core service weights / strict affinity are not installed"
         return 0
     fi
 
@@ -614,7 +680,7 @@ undo_xindi_limit() {
     local file="/etc/systemd/system/makerbase-client.service.d/override.conf"
 
     if [ ! -f "$file" ]; then
-        echo "Not applied: xindi / makerbase-client limit"
+        echo "Already done: xindi / makerbase-client limit is not installed"
         return 0
     fi
 
@@ -630,7 +696,7 @@ undo_obico_limit() {
     local file="/etc/systemd/system/moonraker-obico.service.d/override.conf"
 
     if [ ! -f "$file" ]; then
-        echo "Not applied: Obico CPU limit"
+        echo "Already done: Obico CPU limit is not installed"
         return 0
     fi
 
@@ -640,23 +706,6 @@ undo_obico_limit() {
     add_restart_service "moonraker-obico.service"
     systemctl daemon-reload
     echo "Removed: Obico CPU limit"
-}
-
-undo_obico_streaming() {
-    local cfg="/home/mks/printer_data/config/moonraker-obico.cfg"
-
-    if [ ! -f "$cfg" ]; then
-        echo "Not applied: Obico config not found"
-        return 0
-    fi
-
-    if ! grep -Eiq '^[[:space:]]*disable_video_streaming[[:space:]]*=[[:space:]]*True[[:space:]]*$' "$cfg"; then
-        echo "Not applied: Obico live video streaming is not disabled"
-        return 0
-    fi
-
-    patch_obico_streaming_enabled
-    echo "Set: Obico disable_video_streaming = False"
 }
 
 undo_wifi_disable() {
@@ -766,7 +815,7 @@ checkbox_menu() {
                     current="$max_index"
                 fi
                 ;;
-            1|2|3|4|5|6|7)
+            1|2|3|4|5|6|7|8)
                 idx=$((key - 1))
                 if [ "$idx" -le "$max_index" ]; then
                     toggle_menu_item "$idx"
@@ -799,7 +848,8 @@ checkbox_menu() {
 
 select_apply_options() {
     MENU_LABELS=(
-        "Force CPU governor to performance"
+        "Disable old community /etc/init.d/tuning boot script"
+        "Force CPU governor to performance using this script"
         "Apply core service CPU weights for Klipper, Moonraker, nginx, and webcamd"
         "Apply strict CPU affinity for Klipper/Moonraker/nginx/webcamd"
         "Limit QIDI screen service / xindi with systemd on CPU 0"
@@ -808,17 +858,18 @@ select_apply_options() {
         "Disable Wi-Fi service/interface if Ethernet is active"
     )
 
-    MENU_SELECTED=(0 0 0 0 0 0 0)
+    MENU_SELECTED=(0 0 0 0 0 0 0 0)
 
-    checkbox_menu "QiDi Plus4 Optional Tuning"
+    checkbox_menu "QiDi Plus4 Optional Tuning - Apply"
 
-    DO_CPU_PERFORMANCE="${MENU_SELECTED[0]}"
-    DO_SERVICE_WEIGHTS="${MENU_SELECTED[1]}"
-    DO_STRICT_AFFINITY="${MENU_SELECTED[2]}"
-    DO_XINDI_LIMIT="${MENU_SELECTED[3]}"
-    DO_OBICO_LIMIT="${MENU_SELECTED[4]}"
-    DO_OBICO_STREAMING="${MENU_SELECTED[5]}"
-    DO_WIFI_DISABLE="${MENU_SELECTED[6]}"
+    DO_OLD_TUNING_DISABLE="${MENU_SELECTED[0]}"
+    DO_CPU_PERFORMANCE="${MENU_SELECTED[1]}"
+    DO_SERVICE_WEIGHTS="${MENU_SELECTED[2]}"
+    DO_STRICT_AFFINITY="${MENU_SELECTED[3]}"
+    DO_XINDI_LIMIT="${MENU_SELECTED[4]}"
+    DO_OBICO_LIMIT="${MENU_SELECTED[5]}"
+    DO_OBICO_STREAMING="${MENU_SELECTED[6]}"
+    DO_WIFI_DISABLE="${MENU_SELECTED[7]}"
 
     if [ "$DO_XINDI_LIMIT" = "1" ]; then
         XINDI_CPU_QUOTA="$(ask_value "xindi CPU quota" "$XINDI_CPU_QUOTA")"
@@ -828,7 +879,7 @@ select_apply_options() {
         OBICO_CPU_QUOTA="$(ask_value "Obico CPU quota" "$OBICO_CPU_QUOTA")"
     fi
 
-    if [ "$DO_CPU_PERFORMANCE$DO_SERVICE_WEIGHTS$DO_STRICT_AFFINITY$DO_XINDI_LIMIT$DO_OBICO_LIMIT$DO_OBICO_STREAMING$DO_WIFI_DISABLE" = "0000000" ]; then
+    if [ "$DO_OLD_TUNING_DISABLE$DO_CPU_PERFORMANCE$DO_SERVICE_WEIGHTS$DO_STRICT_AFFINITY$DO_XINDI_LIMIT$DO_OBICO_LIMIT$DO_OBICO_STREAMING$DO_WIFI_DISABLE" = "00000000" ]; then
         echo "Nothing selected. Exiting."
         exit 0
     fi
@@ -836,7 +887,8 @@ select_apply_options() {
 
 select_undo_options() {
     MENU_LABELS=(
-        "Undo CPU performance governor service"
+        "Re-enable old community /etc/init.d/tuning boot script"
+        "Undo CPU performance governor service from this script"
         "Undo core service CPU weights and strict affinity"
         "Undo QIDI screen service / xindi systemd limit"
         "Undo Obico CPU limit"
@@ -844,19 +896,20 @@ select_undo_options() {
         "Re-enable Wi-Fi service/interface"
     )
 
-    MENU_SELECTED=(0 0 0 0 0 0)
+    MENU_SELECTED=(0 0 0 0 0 0 0)
 
-    checkbox_menu "QiDi Plus4 Optional Tuning Undo"
+    checkbox_menu "QiDi Plus4 Optional Tuning - Undo"
 
-    DO_CPU_PERFORMANCE="${MENU_SELECTED[0]}"
-    DO_SERVICE_WEIGHTS="${MENU_SELECTED[1]}"
+    DO_OLD_TUNING_DISABLE="${MENU_SELECTED[0]}"
+    DO_CPU_PERFORMANCE="${MENU_SELECTED[1]}"
+    DO_SERVICE_WEIGHTS="${MENU_SELECTED[2]}"
     DO_STRICT_AFFINITY=0
-    DO_XINDI_LIMIT="${MENU_SELECTED[2]}"
-    DO_OBICO_LIMIT="${MENU_SELECTED[3]}"
-    DO_OBICO_STREAMING="${MENU_SELECTED[4]}"
-    DO_WIFI_DISABLE="${MENU_SELECTED[5]}"
+    DO_XINDI_LIMIT="${MENU_SELECTED[3]}"
+    DO_OBICO_LIMIT="${MENU_SELECTED[4]}"
+    DO_OBICO_STREAMING="${MENU_SELECTED[5]}"
+    DO_WIFI_DISABLE="${MENU_SELECTED[6]}"
 
-    if [ "$DO_CPU_PERFORMANCE$DO_SERVICE_WEIGHTS$DO_XINDI_LIMIT$DO_OBICO_LIMIT$DO_OBICO_STREAMING$DO_WIFI_DISABLE" = "000000" ]; then
+    if [ "$DO_OLD_TUNING_DISABLE$DO_CPU_PERFORMANCE$DO_SERVICE_WEIGHTS$DO_XINDI_LIMIT$DO_OBICO_LIMIT$DO_OBICO_STREAMING$DO_WIFI_DISABLE" = "0000000" ]; then
         echo "Nothing selected. Exiting."
         exit 0
     fi
@@ -866,19 +919,19 @@ show_apply_plan() {
     echo
     echo "===== APPLY PLAN ====="
 
+    if [ "$DO_OLD_TUNING_DISABLE" = "1" ]; then
+        old_tuning_disabled && echo "- Old community tuning boot script: already disabled" || echo "- Old community tuning boot script: will disable"
+    fi
+
     if [ "$DO_CPU_PERFORMANCE" = "1" ]; then
-        if cpu_performance_applied; then
-            echo "- CPU governor performance: already applied"
-        else
-            echo "- CPU governor performance: will apply"
-        fi
+        cpu_performance_applied && echo "- CPU governor performance service: already done" || echo "- CPU governor performance service: will apply"
     fi
 
     if [ "$DO_SERVICE_WEIGHTS" = "1" ] || [ "$DO_STRICT_AFFINITY" = "1" ]; then
         if [ "$DO_STRICT_AFFINITY" = "1" ] && strict_affinity_applied && core_weights_applied; then
-            echo "- Core service weights + strict affinity: already applied"
+            echo "- Core weights + strict affinity: already done"
         elif [ "$DO_STRICT_AFFINITY" = "0" ] && core_weights_applied; then
-            echo "- Core service weights: already applied"
+            echo "- Core service weights: already done"
         else
             echo "- Core service weights: will apply/update"
             [ "$DO_STRICT_AFFINITY" = "1" ] && echo "  - Strict affinity: Klipper CPU 1/2, Moonraker/nginx/webcamd CPU 3"
@@ -886,37 +939,23 @@ show_apply_plan() {
     fi
 
     if [ "$DO_XINDI_LIMIT" = "1" ]; then
-        if xindi_limit_applied; then
-            echo "- xindi/makerbase-client limit: already applied"
-        else
-            echo "- xindi/makerbase-client limit: will apply/update"
-            echo "  - Nice=5 CPUWeight=10 CPUQuota=$XINDI_CPU_QUOTA CPUAffinity=0"
-        fi
+        xindi_limit_applied && echo "- xindi/makerbase-client limit: already done" || echo "- xindi/makerbase-client limit: will apply/update"
     fi
 
     if [ "$DO_OBICO_LIMIT" = "1" ]; then
-        if obico_limit_applied; then
-            echo "- Obico CPU limit: already applied"
-        else
-            echo "- Obico CPU limit: will apply/update"
-            echo "  - Nice=5 CPUWeight=30 CPUQuota=$OBICO_CPU_QUOTA"
-        fi
+        obico_limit_applied && echo "- Obico CPU limit: already done" || echo "- Obico CPU limit: will apply/update"
     fi
 
     if [ "$DO_OBICO_STREAMING" = "1" ]; then
-        if obico_streaming_disabled; then
-            echo "- Obico live video streaming disabled: already applied"
+        if obico_streaming_disabled && obico_logging_info; then
+            echo "- Obico streaming disabled + logging INFO: already done"
         else
-            echo "- Obico live video streaming disabled: will apply/update"
+            echo "- Obico streaming disabled + logging INFO: will apply/update"
         fi
     fi
 
     if [ "$DO_WIFI_DISABLE" = "1" ]; then
-        if wifi_disable_applied; then
-            echo "- Wi-Fi disabled: already applied"
-        else
-            echo "- Wi-Fi disabled: will apply if Ethernet is active and SSH is not using wlan0"
-        fi
+        wifi_disable_applied && echo "- Wi-Fi disable: already done" || echo "- Wi-Fi disable: will apply if safe"
     fi
 
     echo "- Backup current files before changes"
@@ -927,9 +966,10 @@ show_apply_plan() {
 show_undo_plan() {
     echo
     echo "===== UNDO PLAN ====="
-    [ "$DO_CPU_PERFORMANCE" = "1" ] && echo "- Remove CPU performance governor service"
+    [ "$DO_OLD_TUNING_DISABLE" = "1" ] && echo "- Re-enable old community tuning boot script"
+    [ "$DO_CPU_PERFORMANCE" = "1" ] && echo "- Remove CPU performance governor service from this script"
     [ "$DO_SERVICE_WEIGHTS" = "1" ] && echo "- Remove core service weights and strict affinity overrides"
-    [ "$DO_XINDI_LIMIT" = "1" ] && echo "- Remove xindi/makerbase-client limit"
+    [ "$DO_XINDI_LIMIT" = "1" ] && echo "- Remove xindi/makerbase-client systemd limit"
     [ "$DO_OBICO_LIMIT" = "1" ] && echo "- Remove Obico CPU limit"
     [ "$DO_OBICO_STREAMING" = "1" ] && echo "- Set Obico disable_video_streaming=False"
     [ "$DO_WIFI_DISABLE" = "1" ] && echo "- Re-enable makerbase-wlan0.service and wlan0"
@@ -938,99 +978,13 @@ show_undo_plan() {
     echo
 }
 
-show_apply_dry_run_details() {
-    echo "===== DRY RUN DETAILS ====="
-
-    [ "$DO_CPU_PERFORMANCE" = "1" ] && cat <<EOF
-
-CPU governor:
-Would write:
-/usr/local/sbin/plus4-cpu-performance
-/etc/systemd/system/plus4-cpu-performance.service
-Would enable/restart:
-plus4-cpu-performance.service
-EOF
-
-    if [ "$DO_SERVICE_WEIGHTS" = "1" ] || [ "$DO_STRICT_AFFINITY" = "1" ]; then
-        cat <<EOF
-
-Core services:
-Would write:
-/etc/systemd/system/klipper.service.d/override.conf
-/etc/systemd/system/moonraker.service.d/override.conf
-/etc/systemd/system/webcamd.service.d/override.conf
-/etc/systemd/system/nginx.service.d/override.conf
-Would restart:
-klipper.service
-moonraker.service
-webcamd.service
-nginx.service
-EOF
-    fi
-
-    [ "$DO_XINDI_LIMIT" = "1" ] && cat <<EOF
-
-xindi:
-Would write:
-/etc/systemd/system/makerbase-client.service.d/override.conf
-Would set:
-Nice=5
-CPUWeight=10
-CPUQuota=${XINDI_CPU_QUOTA}
-CPUAffinity=0
-Would restart:
-makerbase-client.service
-EOF
-
-    [ "$DO_OBICO_LIMIT" = "1" ] && cat <<EOF
-
-Obico:
-Would write:
-/etc/systemd/system/moonraker-obico.service.d/override.conf
-Would set:
-Nice=5
-CPUWeight=30
-CPUQuota=${OBICO_CPU_QUOTA}
-Would restart:
-moonraker-obico.service
-EOF
-
-    [ "$DO_OBICO_STREAMING" = "1" ] && cat <<EOF
-
-Obico streaming:
-Would edit:
-/home/mks/printer_data/config/moonraker-obico.cfg
-Would set:
-disable_video_streaming = True
-level = INFO
-Would restart:
-moonraker-obico.service
-EOF
-
-    [ "$DO_WIFI_DISABLE" = "1" ] && cat <<EOF
-
-Wi-Fi:
-Would disable/stop makerbase-wlan0.service and bring wlan0 down if safe.
-EOF
-
-    cat <<EOF
-
-Would create backup under:
-$BACKUP_ROOT/<timestamp>
-
-No files were written.
-No services were restarted.
-No network interfaces were changed.
-EOF
-}
-
 apply_selected() {
     require_root "$ACTION"
 
     select_apply_options
     show_apply_plan
 
-    if ! ask_yes_no "Commit/apply these changes now?" "n"; then
+    if ! ask_yes_no "Commit/apply these selected changes now?" "n"; then
         echo "Aborted. No changes applied."
         exit 0
     fi
@@ -1038,6 +992,7 @@ apply_selected() {
     mkdir -p "$BACKUP_ROOT"
     backup_current_state
 
+    [ "$DO_OLD_TUNING_DISABLE" = "1" ] && apply_disable_old_tuning
     [ "$DO_CPU_PERFORMANCE" = "1" ] && install_cpu_performance_service
 
     if [ "$DO_SERVICE_WEIGHTS" = "1" ] || [ "$DO_STRICT_AFFINITY" = "1" ]; then
@@ -1054,13 +1009,13 @@ apply_selected() {
     echo
     echo "Applied selected Plus4 optional tuning changes."
     echo
-    check_state
+    status_report
 }
 
 dry_run_apply() {
     select_apply_options
     show_apply_plan
-    show_apply_dry_run_details
+    echo "Dry run only. No files were written. No services were restarted."
 }
 
 undo_selected() {
@@ -1069,7 +1024,7 @@ undo_selected() {
     select_undo_options
     show_undo_plan
 
-    if ! ask_yes_no "Commit/undo these changes now?" "n"; then
+    if ! ask_yes_no "Commit/undo these selected changes now?" "n"; then
         echo "Aborted. No changes undone."
         exit 0
     fi
@@ -1077,11 +1032,12 @@ undo_selected() {
     mkdir -p "$BACKUP_ROOT"
     backup_current_state
 
+    [ "$DO_OLD_TUNING_DISABLE" = "1" ] && undo_disable_old_tuning
     [ "$DO_CPU_PERFORMANCE" = "1" ] && undo_cpu_performance
     [ "$DO_SERVICE_WEIGHTS" = "1" ] && undo_core_service_weights
     [ "$DO_XINDI_LIMIT" = "1" ] && undo_xindi_limit
     [ "$DO_OBICO_LIMIT" = "1" ] && undo_obico_limit
-    [ "$DO_OBICO_STREAMING" = "1" ] && undo_obico_streaming
+    [ "$DO_OBICO_STREAMING" = "1" ] && patch_obico_streaming_enabled
     [ "$DO_WIFI_DISABLE" = "1" ] && undo_wifi_disable
 
     restart_changed_services
@@ -1089,18 +1045,13 @@ undo_selected() {
     echo
     echo "Undone selected Plus4 optional tuning changes."
     echo
-    check_state
+    status_report
 }
 
 dry_run_undo() {
     select_undo_options
     show_undo_plan
-
-    echo "===== UNDO DRY RUN DETAILS ====="
-    echo "No files were removed."
-    echo "No files were edited."
-    echo "No services were restarted."
-    echo "No network interfaces were changed."
+    echo "Undo dry run only. No files were removed. No services were restarted."
 }
 
 print_matching_services() {
@@ -1117,7 +1068,53 @@ print_nice_check() {
         | awk -v pat="$pattern" '$0 ~ pat && $0 !~ /awk -v pat/ {print $3, $6, $13, $14, $15}'
 }
 
-check_state() {
+plain_status_summary() {
+    echo "===== EASY STATUS ====="
+
+    old_tuning_disabled \
+        && echo "Old community tuning boot script: disabled or not installed" \
+        || echo "Old community tuning boot script: ENABLED"
+
+    cpu_performance_applied \
+        && echo "CPU performance service from this script: applied" \
+        || echo "CPU performance service from this script: not applied"
+
+    all_governors_performance \
+        && echo "CPU governor right now: performance" \
+        || echo "CPU governor right now: not fully performance"
+
+    core_weights_applied \
+        && echo "Core service CPU weights: applied" \
+        || echo "Core service CPU weights: not applied"
+
+    strict_affinity_applied \
+        && echo "Strict Klipper/Moonraker affinity: applied" \
+        || echo "Strict Klipper/Moonraker affinity: not applied"
+
+    xindi_limit_applied \
+        && echo "xindi systemd limit on CPU 0: applied" \
+        || echo "xindi systemd limit on CPU 0: not applied"
+
+    obico_limit_applied \
+        && echo "Obico CPU limit: applied" \
+        || echo "Obico CPU limit: not applied"
+
+    obico_streaming_disabled \
+        && echo "Obico live video streaming: disabled" \
+        || echo "Obico live video streaming: enabled or not configured"
+
+    obico_logging_info \
+        && echo "Obico logging level INFO: applied" \
+        || echo "Obico logging level INFO: not applied"
+
+    wifi_disable_applied \
+        && echo "Wi-Fi service/interface: disabled" \
+        || echo "Wi-Fi service/interface: not fully disabled"
+
+    echo
+}
+
+status_report() {
     echo "===== TIME / UPTIME / LOAD ====="
     date
     uptime
@@ -1127,6 +1124,8 @@ check_state() {
     free -h
     echo
 
+    plain_status_summary
+
     echo "===== CPU GOVERNOR ====="
     for f in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
         echo "$f: $(cat "$f" 2>/dev/null)"
@@ -1135,16 +1134,6 @@ check_state() {
 
     echo "===== NETWORK ====="
     ip -br addr
-    echo
-
-    echo "===== DETECTED OPTIONAL TUNING ====="
-    cpu_performance_applied && echo "CPU performance governor: applied" || echo "CPU performance governor: not applied"
-    core_weights_applied && echo "Core service weights: applied" || echo "Core service weights: not applied"
-    strict_affinity_applied && echo "Strict affinity: applied" || echo "Strict affinity: not applied"
-    xindi_limit_applied && echo "xindi limit: applied" || echo "xindi limit: not applied"
-    obico_limit_applied && echo "Obico limit: applied" || echo "Obico limit: not applied"
-    obico_streaming_disabled && echo "Obico streaming disabled: applied" || echo "Obico streaming disabled: not applied"
-    wifi_disable_applied && echo "Wi-Fi disabled: applied" || echo "Wi-Fi disabled: not applied"
     echo
 
     echo "===== SYSTEMD LIMITS: KLIPPER ====="
@@ -1193,11 +1182,11 @@ case "$ACTION" in
     undo-dry-run|revert-dry-run)
         dry_run_undo
         ;;
-    check)
-        check_state
+    status|check)
+        status_report
         ;;
     *)
-        echo "Usage: $0 {apply|dry-run|undo|undo-dry-run|check}"
+        echo "Usage: $0 {apply|dry-run|undo|undo-dry-run|status}"
         exit 2
         ;;
 esac
