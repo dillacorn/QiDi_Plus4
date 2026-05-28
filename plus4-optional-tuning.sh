@@ -2,20 +2,12 @@
 set -euo pipefail
 
 # plus4-optional-tuning.sh
-# Interactive QiDi Plus4 optional host-load tuning for reducing Timer Too Close / MCU timeout risk.
+# Interactive QiDi Plus4 optional host-load tuning.
 #
-# Usage:
-#   /home/mks/plus4-optional-tuning.sh
-#   /home/mks/plus4-optional-tuning.sh apply
-#   /home/mks/plus4-optional-tuning.sh dry-run
-#   /home/mks/plus4-optional-tuning.sh undo
-#   /home/mks/plus4-optional-tuning.sh undo-dry-run
-#   /home/mks/plus4-optional-tuning.sh status
+# Run:
+#   ./plus4-optional-tuning.sh
 #
-# Default action with no argument:
-#   apply
-
-ACTION="${1:-apply}"
+# No arguments are needed. The script opens a menu.
 
 BACKUP_ROOT="/root/plus4-optional-tuning-backups"
 STAMP="$(date +%Y%m%d-%H%M%S)"
@@ -33,12 +25,13 @@ XINDI_CPU_QUOTA="25%"
 OBICO_CPU_QUOTA="50%"
 
 declare -a MENU_LABELS=()
+declare -a MENU_GROUPS=()
 declare -a MENU_SELECTED=()
 declare -a RESTART_SERVICES=()
 
 require_root() {
     if [ "${EUID}" -ne 0 ]; then
-        exec sudo bash "$0" "$@"
+        exec sudo bash "$0"
     fi
 }
 
@@ -282,12 +275,12 @@ apply_disable_old_tuning() {
 
 undo_disable_old_tuning() {
     if ! old_tuning_present; then
-        echo "Not installed: old community tuning script"
+        echo "Already done: old community tuning script is not installed"
         return 0
     fi
 
     if old_tuning_enabled; then
-        echo "Already enabled: old community tuning boot script"
+        echo "Already done: old community tuning boot script is enabled"
         return 0
     fi
 
@@ -725,6 +718,7 @@ render_checkbox_menu() {
     local prefix
     local marker
     local i
+    local last_group=""
 
     clear
     echo "$title"
@@ -733,10 +727,16 @@ render_checkbox_menu() {
     echo "Use Up/Down or j/k to move."
     echo "Use Space or number keys to toggle."
     echo "Press Enter to continue."
-    echo "Press q to quit."
+    echo "Press q to go back."
     echo
 
     for i in "${!MENU_LABELS[@]}"; do
+        if [ "${MENU_GROUPS[i]}" != "$last_group" ]; then
+            last_group="${MENU_GROUPS[i]}"
+            echo
+            echo "== $last_group =="
+        fi
+
         checked="[ ]"
 
         if [ "${MENU_SELECTED[i]}" = "1" ]; then
@@ -797,9 +797,7 @@ checkbox_menu() {
                 toggle_menu_item "$current"
                 ;;
             q|Q)
-                clear
-                echo "Aborted. No changes selected."
-                exit 0
+                return 1
                 ;;
             j|J)
                 if [ "$current" -lt "$max_index" ]; then
@@ -844,23 +842,35 @@ checkbox_menu() {
     done
 
     clear
+    return 0
 }
 
 select_apply_options() {
     MENU_LABELS=(
         "Disable old community /etc/init.d/tuning boot script"
         "Force CPU governor to performance using this script"
-        "Apply core service CPU weights for Klipper, Moonraker, nginx, and webcamd"
-        "Apply strict CPU affinity for Klipper/Moonraker/nginx/webcamd"
-        "Limit QIDI screen service / xindi with systemd on CPU 0"
-        "Keep Obico running but lower priority and cap CPU usage"
-        "Disable Obico live video streaming while keeping Obico running"
+        "Apply core service CPU weights"
+        "Apply strict CPU affinity"
+        "Limit QIDI screen service / xindi on CPU 0"
+        "Keep Obico running but lower priority and cap CPU"
+        "Disable Obico live video streaming"
         "Disable Wi-Fi service/interface if Ethernet is active"
+    )
+
+    MENU_GROUPS=(
+        "Migration"
+        "CPU"
+        "Advanced service scheduling"
+        "Advanced service scheduling"
+        "QIDI screen service"
+        "Obico"
+        "Obico"
+        "Network"
     )
 
     MENU_SELECTED=(0 0 0 0 0 0 0 0)
 
-    checkbox_menu "QiDi Plus4 Optional Tuning - Apply"
+    checkbox_menu "QiDi Plus4 Optional Tuning - Apply" || return 1
 
     DO_OLD_TUNING_DISABLE="${MENU_SELECTED[0]}"
     DO_CPU_PERFORMANCE="${MENU_SELECTED[1]}"
@@ -880,8 +890,8 @@ select_apply_options() {
     fi
 
     if [ "$DO_OLD_TUNING_DISABLE$DO_CPU_PERFORMANCE$DO_SERVICE_WEIGHTS$DO_STRICT_AFFINITY$DO_XINDI_LIMIT$DO_OBICO_LIMIT$DO_OBICO_STREAMING$DO_WIFI_DISABLE" = "00000000" ]; then
-        echo "Nothing selected. Exiting."
-        exit 0
+        echo "Nothing selected."
+        return 1
     fi
 }
 
@@ -896,9 +906,19 @@ select_undo_options() {
         "Re-enable Wi-Fi service/interface"
     )
 
+    MENU_GROUPS=(
+        "Migration"
+        "CPU"
+        "Advanced service scheduling"
+        "QIDI screen service"
+        "Obico"
+        "Obico"
+        "Network"
+    )
+
     MENU_SELECTED=(0 0 0 0 0 0 0)
 
-    checkbox_menu "QiDi Plus4 Optional Tuning - Undo"
+    checkbox_menu "QiDi Plus4 Optional Tuning - Undo" || return 1
 
     DO_OLD_TUNING_DISABLE="${MENU_SELECTED[0]}"
     DO_CPU_PERFORMANCE="${MENU_SELECTED[1]}"
@@ -910,8 +930,8 @@ select_undo_options() {
     DO_WIFI_DISABLE="${MENU_SELECTED[6]}"
 
     if [ "$DO_OLD_TUNING_DISABLE$DO_CPU_PERFORMANCE$DO_SERVICE_WEIGHTS$DO_XINDI_LIMIT$DO_OBICO_LIMIT$DO_OBICO_STREAMING$DO_WIFI_DISABLE" = "0000000" ]; then
-        echo "Nothing selected. Exiting."
-        exit 0
+        echo "Nothing selected."
+        return 1
     fi
 }
 
@@ -920,7 +940,7 @@ show_apply_plan() {
     echo "===== APPLY PLAN ====="
 
     if [ "$DO_OLD_TUNING_DISABLE" = "1" ]; then
-        old_tuning_disabled && echo "- Old community tuning boot script: already disabled" || echo "- Old community tuning boot script: will disable"
+        old_tuning_disabled && echo "- Old community tuning boot script: already done" || echo "- Old community tuning boot script: will disable"
     fi
 
     if [ "$DO_CPU_PERFORMANCE" = "1" ]; then
@@ -978,15 +998,15 @@ show_undo_plan() {
     echo
 }
 
-apply_selected() {
-    require_root "$ACTION"
-
-    select_apply_options
+do_apply_menu() {
+    clear
+    select_apply_options || return 0
     show_apply_plan
 
     if ! ask_yes_no "Commit/apply these selected changes now?" "n"; then
         echo "Aborted. No changes applied."
-        exit 0
+        read -r -p "Press Enter to continue..." _
+        return 0
     fi
 
     mkdir -p "$BACKUP_ROOT"
@@ -1008,25 +1028,18 @@ apply_selected() {
 
     echo
     echo "Applied selected Plus4 optional tuning changes."
-    echo
-    status_report
+    read -r -p "Press Enter to continue..." _
 }
 
-dry_run_apply() {
-    select_apply_options
-    show_apply_plan
-    echo "Dry run only. No files were written. No services were restarted."
-}
-
-undo_selected() {
-    require_root "$ACTION"
-
-    select_undo_options
+do_undo_menu() {
+    clear
+    select_undo_options || return 0
     show_undo_plan
 
     if ! ask_yes_no "Commit/undo these selected changes now?" "n"; then
         echo "Aborted. No changes undone."
-        exit 0
+        read -r -p "Press Enter to continue..." _
+        return 0
     fi
 
     mkdir -p "$BACKUP_ROOT"
@@ -1044,14 +1057,7 @@ undo_selected() {
 
     echo
     echo "Undone selected Plus4 optional tuning changes."
-    echo
-    status_report
-}
-
-dry_run_undo() {
-    select_undo_options
-    show_undo_plan
-    echo "Undo dry run only. No files were removed. No services were restarted."
+    read -r -p "Press Enter to continue..." _
 }
 
 print_matching_services() {
@@ -1059,13 +1065,6 @@ print_matching_services() {
 
     ps -eo pid,ppid,ni,psr,stat,%cpu,%mem,comm,args --sort=-%cpu \
         | awk -v pat="$pattern" 'NR == 1 || ($0 ~ pat && $0 !~ /awk -v pat/)'
-}
-
-print_nice_check() {
-    local pattern="mjpg|xindi|nginx|moonraker|obico|klippy|tailscale"
-
-    ps axl \
-        | awk -v pat="$pattern" '$0 ~ pat && $0 !~ /awk -v pat/ {print $3, $6, $13, $14, $15}'
 }
 
 plain_status_summary() {
@@ -1115,6 +1114,8 @@ plain_status_summary() {
 }
 
 status_report() {
+    clear
+
     echo "===== TIME / UPTIME / LOAD ====="
     date
     uptime
@@ -1126,67 +1127,46 @@ status_report() {
 
     plain_status_summary
 
-    echo "===== CPU GOVERNOR ====="
-    for f in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
-        echo "$f: $(cat "$f" 2>/dev/null)"
-    done
-    echo
-
     echo "===== NETWORK ====="
     ip -br addr
-    echo
-
-    echo "===== SYSTEMD LIMITS: KLIPPER ====="
-    systemctl show klipper.service -p Nice -p CPUAccounting -p CPUWeight -p CPUQuotaPerSecUSec -p CPUAffinity -p AllowedCPUs 2>/dev/null || true
-    echo
-
-    echo "===== SYSTEMD LIMITS: MOONRAKER ====="
-    systemctl show moonraker.service -p Nice -p CPUAccounting -p CPUWeight -p CPUQuotaPerSecUSec -p CPUAffinity -p AllowedCPUs 2>/dev/null || true
-    echo
-
-    echo "===== SYSTEMD LIMITS: XINDI / MAKERBASE ====="
-    systemctl show makerbase-client.service -p Nice -p CPUAccounting -p CPUWeight -p CPUQuotaPerSecUSec -p CPUAffinity -p AllowedCPUs 2>/dev/null || true
-    echo
-
-    echo "===== SYSTEMD LIMITS: OBICO ====="
-    systemctl show moonraker-obico.service -p Nice -p CPUAccounting -p CPUWeight -p CPUQuotaPerSecUSec -p CPUAffinity -p AllowedCPUs 2>/dev/null || true
-    echo
-
-    echo "===== OBICO CONFIG ====="
-    grep -nEi "disable_video_streaming|snapshot_url|stream_url|level" /home/mks/printer_data/config/moonraker-obico.cfg 2>/dev/null || true
     echo
 
     echo "===== TOP PRINT / NETWORK SERVICES ====="
     print_matching_services
     echo
 
-    echo "===== NICE CHECK ====="
-    print_nice_check
+    echo "===== OBICO CONFIG ====="
+    grep -nEi "disable_video_streaming|snapshot_url|stream_url|level" /home/mks/printer_data/config/moonraker-obico.cfg 2>/dev/null || true
     echo
 
-    echo "===== SERVICE STATES ====="
-    systemctl --no-pager --type=service \
-        | awk '/klipper|moonraker|obico|makerbase|webcam|nginx|tailscale|mjpg|xindi|wlan/'
+    read -r -p "Press Enter to continue..." _
 }
 
-case "$ACTION" in
-    apply)
-        apply_selected
-        ;;
-    dry-run)
-        dry_run_apply
-        ;;
-    undo|revert)
-        undo_selected
-        ;;
-    undo-dry-run|revert-dry-run)
-        dry_run_undo
-        ;;
-    status|check)
-        status_report
-        ;;
-    *)
-        echo "Usage: $0 {apply|dry-run|undo|undo-dry-run|status}"
-        exit 2
-        ;;
-esac
+main_menu() {
+    require_root
+
+    while true; do
+        clear
+        echo "QiDi Plus4 Optional Tuning"
+        echo
+        echo "Choose a section:"
+        echo
+        echo "1. Apply optimizations"
+        echo "2. Undo optimizations"
+        echo "3. View status"
+        echo "4. Exit"
+        echo
+
+        read -r -p "Selection [1-4]: " choice
+
+        case "$choice" in
+            1) do_apply_menu ;;
+            2) do_undo_menu ;;
+            3) status_report ;;
+            4|q|Q) clear; exit 0 ;;
+            *) echo "Invalid selection."; sleep 1 ;;
+        esac
+    done
+}
+
+main_menu
