@@ -7,7 +7,7 @@ set -euo pipefail
 # Run:
 #   ./plus4-optional-tuning.sh
 #
-# No arguments are needed. The script opens a menu.
+# No arguments needed. The script opens a menu.
 
 BACKUP_ROOT="/root/plus4-optional-tuning-backups"
 STAMP="$(date +%Y%m%d-%H%M%S)"
@@ -335,12 +335,12 @@ EOF
 
 install_core_service_weights() {
     if [ "$DO_STRICT_AFFINITY" = "1" ] && strict_affinity_applied && core_weights_applied; then
-        echo "Already done: strict CPU affinity and core service weights"
+        echo "Already done: strict CPU affinity mode"
         return 0
     fi
 
-    if [ "$DO_STRICT_AFFINITY" = "0" ] && core_weights_applied; then
-        echo "Already done: core service CPU weights"
+    if [ "$DO_STRICT_AFFINITY" = "0" ] && core_weights_applied && ! strict_affinity_applied; then
+        echo "Already done: core service CPU weights-only mode"
         return 0
     fi
 
@@ -711,6 +711,33 @@ undo_wifi_disable() {
     echo "Re-enabled: makerbase-wlan0.service / wlan0"
 }
 
+resolve_scheduling_conflict() {
+    if [ "$DO_SERVICE_WEIGHTS" = "1" ] && [ "$DO_STRICT_AFFINITY" = "1" ]; then
+        echo
+        echo "Scheduling mode conflict:"
+        echo "You selected both scheduling modes."
+        echo
+        echo "Core weights only:"
+        echo "  Safer. Gives Klipper priority without pinning services to fixed CPU cores."
+        echo
+        echo "Strict affinity:"
+        echo "  More aggressive. Includes core weights and pins services to specific CPU cores."
+        echo
+        echo "Pick one mode."
+        echo
+
+        if ask_yes_no "Use strict CPU affinity instead of weights-only mode?" "n"; then
+            DO_SERVICE_WEIGHTS=0
+            DO_STRICT_AFFINITY=1
+            echo "Selected scheduling mode: strict CPU affinity."
+        else
+            DO_SERVICE_WEIGHTS=1
+            DO_STRICT_AFFINITY=0
+            echo "Selected scheduling mode: core weights only."
+        fi
+    fi
+}
+
 render_checkbox_menu() {
     local current="$1"
     local title="$2"
@@ -849,8 +876,8 @@ select_apply_options() {
     MENU_LABELS=(
         "Disable old community /etc/init.d/tuning boot script"
         "Force CPU governor to performance using this script"
-        "Apply core service CPU weights"
-        "Apply strict CPU affinity"
+        "Apply core service CPU weights only"
+        "Apply strict CPU affinity instead of weights-only mode"
         "Limit QIDI screen service / xindi on CPU 0"
         "Keep Obico running but lower priority and cap CPU"
         "Disable Obico live video streaming"
@@ -880,6 +907,8 @@ select_apply_options() {
     DO_OBICO_LIMIT="${MENU_SELECTED[5]}"
     DO_OBICO_STREAMING="${MENU_SELECTED[6]}"
     DO_WIFI_DISABLE="${MENU_SELECTED[7]}"
+
+    resolve_scheduling_conflict
 
     if [ "$DO_XINDI_LIMIT" = "1" ]; then
         XINDI_CPU_QUOTA="$(ask_value "xindi CPU quota" "$XINDI_CPU_QUOTA")"
@@ -947,14 +976,22 @@ show_apply_plan() {
         cpu_performance_applied && echo "- CPU governor performance service: already done" || echo "- CPU governor performance service: will apply"
     fi
 
-    if [ "$DO_SERVICE_WEIGHTS" = "1" ] || [ "$DO_STRICT_AFFINITY" = "1" ]; then
-        if [ "$DO_STRICT_AFFINITY" = "1" ] && strict_affinity_applied && core_weights_applied; then
-            echo "- Core weights + strict affinity: already done"
-        elif [ "$DO_STRICT_AFFINITY" = "0" ] && core_weights_applied; then
-            echo "- Core service weights: already done"
+    if [ "$DO_SERVICE_WEIGHTS" = "1" ]; then
+        if core_weights_applied && ! strict_affinity_applied; then
+            echo "- Core service CPU weights-only mode: already done"
         else
-            echo "- Core service weights: will apply/update"
-            [ "$DO_STRICT_AFFINITY" = "1" ] && echo "  - Strict affinity: Klipper CPU 1/2, Moonraker/nginx/webcamd CPU 3"
+            echo "- Core service CPU weights-only mode: will apply/update"
+        fi
+    fi
+
+    if [ "$DO_STRICT_AFFINITY" = "1" ]; then
+        if strict_affinity_applied && core_weights_applied; then
+            echo "- Strict CPU affinity mode: already done"
+        else
+            echo "- Strict CPU affinity mode: will apply/update"
+            echo "  - Klipper CPU 1/2"
+            echo "  - Moonraker/nginx/webcamd CPU 3"
+            echo "  - Includes core CPU weights"
         fi
     fi
 
@@ -1082,13 +1119,13 @@ plain_status_summary() {
         && echo "CPU governor right now: performance" \
         || echo "CPU governor right now: not fully performance"
 
-    core_weights_applied \
-        && echo "Core service CPU weights: applied" \
-        || echo "Core service CPU weights: not applied"
-
-    strict_affinity_applied \
-        && echo "Strict Klipper/Moonraker affinity: applied" \
-        || echo "Strict Klipper/Moonraker affinity: not applied"
+    if core_weights_applied && ! strict_affinity_applied; then
+        echo "Scheduling mode: core weights only"
+    elif core_weights_applied && strict_affinity_applied; then
+        echo "Scheduling mode: strict CPU affinity"
+    else
+        echo "Scheduling mode: not applied"
+    fi
 
     xindi_limit_applied \
         && echo "xindi systemd limit on CPU 0: applied" \
