@@ -105,6 +105,8 @@ I recommend printing these mods in ASA.
 - 80x80x38mm 24v 2-pin 3500-4200rpm fan
 - [Hex mainboard cover for 80mm fan](https://www.printables.com/model/1146502-qidi-plus-4-hex-mainboard-cover-for-80mm-fan-with)
 - [Fan grille](https://www.amazon.com/dp/B01CU72VS4)
+- [80mm fan filter](https://www.amazon.com/Optimized-Computer-Airflow-Dustproof-80x80mm/dp/B07WCMKZ2S?nsdOptOutParam=true)
+  Note: Keeps the dust out
 
 ### 3D printed mods
 
