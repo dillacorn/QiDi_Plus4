@@ -1,8 +1,6 @@
 # QiDi_Plus4
 
-<sub>Tested with QiDi Plus4 firmware version 1.7.3</sub>
-
-My Orca Slicer settings for the QiDi Plus4, with QiDi Box support and Klipper `gcode_macro.cfg` / `printer.cfg` adjustments that can be changed in the Fluidd UI.
+My Orca Slicer settings for the QiDi Plus4, with QiDi Box support and maintained Klipper `gcode_macro.cfg` / `printer.cfg` adjustments that can be changed in the Fluidd UI.
 
 ## Important warnings
 
@@ -27,6 +25,26 @@ My Orca Slicer settings for the QiDi Plus4, with QiDi Box support and Klipper `g
 - QiDi Box essentially ruined one of my spools because a roller was not rolling smoothly.
 - I resolved it by swapping rollers around. They pull out easily.
 
+### Stock touchscreen / QIDI screen stack
+
+I no longer use the stock QiDi Plus4 touchscreen.
+
+On my setup, the stock screen / Makerbase stack kept running background processes such as `xindi` / `QIDILink-client` even when I was mainly using Fluidd. While troubleshooting repeated `MCU: Timer Too Close` and main-MCU communication shutdowns, `xindi` was one of the heavier CPU users on the printer host.
+
+I now leave the stock screen disconnected and use Fluidd from a separate laptop / touchscreen device instead. This keeps the printer host focused on Klipper, Moonraker, and Fluidd instead of also running the stock screen UI.
+
+This is optional. If you rely on the stock screen, do not disable it.
+
+Use the optional tuning script to disable, verify, or re-enable the stock screen / Makerbase stack:
+
+[plus4-optional-tuning.sh](https://github.com/dillacorn/QiDi_Plus4/blob/main/plus4-optional-tuning.sh)
+
+In the script menu:
+
+- `Apply optimizations` → `Disable QIDI screen service / xindi completely`
+- `Undo optimizations` → `Re-enable QIDI screen service / xindi`
+- `View status` → check whether the QIDI screen / QIDILink processes are running
+
 ## Z-offset note
 
 <sub>Source / credit: [Kuo Steps for Improving Z-Offset Reliability](https://github.com/qidi-community/Plus4-Wiki/blob/main/content%2FKuo-Steps-for-Improving-Z-Offset-Reliability%2FREADME.md)</sub>
@@ -49,11 +67,31 @@ Use it as a starting point only. You will likely need to adjust this yourself ba
 
 ## Bed leveling and tramming
 
-Only level the bed from the QiDi printer screen.
+I no longer use the stock printer screen, so I do bed leveling from the Fluidd console using the QiDi macros.
 
-Do **not** level the bed from Fluidd.
+Do **not** use the generic Fluidd bed-mesh button if it only sends:
 
-If your bed mesh shows around `0.30` or higher out of level, re-tram the bed and recalibrate using `Z_TILT_ADJUST` plus the built-in QiDi bed reset procedure from the printer display.
+```gcode
+BED_MESH_CALIBRATE
+```
+
+Use the QiDi bed-level macros instead:
+
+```gcode
+QIDI_BED_LEVEL_60
+```
+
+for PLA / low-temp bed leveling, or:
+
+```gcode
+QIDI_BED_LEVEL_100
+```
+
+for ASA / ABS bed leveling.
+
+These macros follow the QiDi leveling path and are safer than running a bare `BED_MESH_CALIBRATE` from Fluidd.
+
+If your bed mesh shows around `0.30` or higher out of level, re-tram the bed and recalibrate using `Z_TILT_ADJUST` plus the QiDi bed reset / bed-level macro path.
 
 For the closest tram possible, I recommend this bed tramming tool:
 
@@ -129,6 +167,19 @@ I recommend printing these mods in ASA.
 ## Performance Tuning
 
 The QiDi Community Plus4 Wiki has a system tuning guide that may help with repeatable `MCU: Timer Too Close` shutdowns.
+
+The stability setup I currently use while avoiding `MCU: Timer Too Close` problems:
+
+- Stock screen disconnected.
+- `makerbase-client.service` disabled and masked.
+- WiFi USB dongle removed.
+- X/Y/Z/Z1 `run_current` reduced from my previous `1.15A` test value to `1.11A`.
+- `cooling_fan` `tachometer_poll_interval` changed from `0.0015` to `0.010`.
+- Printer-side Orca timelapse G-code removed.
+- Fluidd is used from a separate laptop / touchscreen device.
+
+These changes are not mandatory. They are meant to reduce host CPU load, USB/device activity, and extra mainboard stress on my setup.
+
 
 - [QiDi Plus4 System Tuning Guide](https://github.com/qidi-community/Plus4-Wiki/blob/main/content/system-tuning/README.md)
 

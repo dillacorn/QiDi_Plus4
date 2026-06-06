@@ -16,6 +16,7 @@ DO_OLD_TUNING_DISABLE=0
 DO_CPU_PERFORMANCE=0
 DO_SERVICE_WEIGHTS=0
 DO_STRICT_AFFINITY=0
+DO_QIDI_SCREEN_DISABLE=0
 DO_XINDI_LIMIT=0
 DO_OBICO_LIMIT=0
 DO_OBICO_STREAMING=0
@@ -93,6 +94,7 @@ backup_current_state() {
     backup_path "/etc/systemd/system/moonraker.service.d/override.conf" "$backup_dir"
     backup_path "/etc/systemd/system/webcamd.service.d/override.conf" "$backup_dir"
     backup_path "/etc/systemd/system/nginx.service.d/override.conf" "$backup_dir"
+    backup_path "/etc/systemd/system/makerbase-client.service" "$backup_dir"
     backup_path "/etc/systemd/system/makerbase-client.service.d/override.conf" "$backup_dir"
     backup_path "/etc/systemd/system/moonraker-obico.service.d/override.conf" "$backup_dir"
     backup_path "/etc/systemd/system/plus4-cpu-performance.service" "$backup_dir"
@@ -208,6 +210,26 @@ xindi_limit_applied() {
         && grep -Fxq "CPUWeight=10" "$file" 2>/dev/null \
         && grep -Fxq "CPUQuota=${XINDI_CPU_QUOTA}" "$file" 2>/dev/null \
         && grep -Fxq "CPUAffinity=0" "$file" 2>/dev/null
+}
+
+qidi_screen_disabled() {
+    local enabled_state=""
+
+    enabled_state="$(systemctl is-enabled makerbase-client.service 2>/dev/null || true)"
+
+    if [ "$enabled_state" != "masked" ]; then
+        return 1
+    fi
+
+    if systemctl is-active --quiet makerbase-client.service 2>/dev/null; then
+        return 1
+    fi
+
+    ! pgrep -f '/root/xindi/build/xindi|/root/xindi/build/start.sh|/root/QIDILink-client/udp_server' >/dev/null 2>&1
+}
+
+qidi_screen_processes_running() {
+    pgrep -f '/root/xindi/build/xindi|/root/xindi/build/start.sh|/root/QIDILink-client/udp_server' >/dev/null 2>&1
 }
 
 obico_limit_applied() {
@@ -406,6 +428,36 @@ EOF
     add_restart_service "moonraker.service"
     add_restart_service "webcamd.service"
     add_restart_service "nginx.service"
+
+    systemctl daemon-reload
+}
+
+disable_qidi_screen_service() {
+    if qidi_screen_disabled; then
+        echo "Already done: QIDI screen service / xindi is disabled and masked"
+        return 0
+    fi
+
+    systemctl disable --now makerbase-client.service >/dev/null 2>&1 || true
+    systemctl mask makerbase-client.service >/dev/null 2>&1 || true
+
+    pkill -f '/root/xindi/build/xindi' >/dev/null 2>&1 || true
+    pkill -f '/root/xindi/build/start.sh' >/dev/null 2>&1 || true
+    pkill -f '/root/QIDILink-client/udp_server' >/dev/null 2>&1 || true
+
+    systemctl daemon-reload
+    echo "Disabled: QIDI screen service / xindi / QIDILink stack"
+}
+
+enable_qidi_screen_service() {
+    systemctl unmask makerbase-client.service >/dev/null 2>&1 || true
+
+    if service_exists "makerbase-client.service"; then
+        systemctl enable --now makerbase-client.service >/dev/null 2>&1 || true
+        echo "Re-enabled: QIDI screen service / xindi stack"
+    else
+        echo "Cannot re-enable QIDI screen service: makerbase-client.service not found"
+    fi
 
     systemctl daemon-reload
 }
@@ -738,6 +790,16 @@ resolve_scheduling_conflict() {
     fi
 }
 
+resolve_qidi_screen_conflict() {
+    if [ "$DO_QIDI_SCREEN_DISABLE" = "1" ] && [ "$DO_XINDI_LIMIT" = "1" ]; then
+        echo
+        echo "QIDI screen service conflict:"
+        echo "You selected both disable and CPU-limit for the screen service."
+        echo "Disable wins because a stopped/masked service cannot also be limited."
+        DO_XINDI_LIMIT=0
+    fi
+}
+
 render_checkbox_menu() {
     local current="$1"
     local title="$2"
@@ -840,7 +902,7 @@ checkbox_menu() {
                     current="$max_index"
                 fi
                 ;;
-            1|2|3|4|5|6|7|8)
+            1|2|3|4|5|6|7|8|9)
                 idx=$((key - 1))
                 if [ "$idx" -le "$max_index" ]; then
                     toggle_menu_item "$idx"
@@ -878,6 +940,7 @@ select_apply_options() {
         "Force CPU governor to performance using this script"
         "Apply core service CPU weights only"
         "Apply strict CPU affinity instead of weights-only mode"
+        "Disable QIDI screen service / xindi completely"
         "Limit QIDI screen service / xindi on CPU 0"
         "Keep Obico running but lower priority and cap CPU"
         "Disable Obico live video streaming"
@@ -890,12 +953,13 @@ select_apply_options() {
         "Advanced service scheduling"
         "Advanced service scheduling"
         "QIDI screen service"
+        "QIDI screen service"
         "Obico"
         "Obico"
         "Network"
     )
 
-    MENU_SELECTED=(0 0 0 0 0 0 0 0)
+    MENU_SELECTED=(0 0 0 0 0 0 0 0 0)
 
     checkbox_menu "QiDi Plus4 Optional Tuning - Apply" || return 1
 
@@ -903,12 +967,14 @@ select_apply_options() {
     DO_CPU_PERFORMANCE="${MENU_SELECTED[1]}"
     DO_SERVICE_WEIGHTS="${MENU_SELECTED[2]}"
     DO_STRICT_AFFINITY="${MENU_SELECTED[3]}"
-    DO_XINDI_LIMIT="${MENU_SELECTED[4]}"
-    DO_OBICO_LIMIT="${MENU_SELECTED[5]}"
-    DO_OBICO_STREAMING="${MENU_SELECTED[6]}"
-    DO_WIFI_DISABLE="${MENU_SELECTED[7]}"
+    DO_QIDI_SCREEN_DISABLE="${MENU_SELECTED[4]}"
+    DO_XINDI_LIMIT="${MENU_SELECTED[5]}"
+    DO_OBICO_LIMIT="${MENU_SELECTED[6]}"
+    DO_OBICO_STREAMING="${MENU_SELECTED[7]}"
+    DO_WIFI_DISABLE="${MENU_SELECTED[8]}"
 
     resolve_scheduling_conflict
+    resolve_qidi_screen_conflict
 
     if [ "$DO_XINDI_LIMIT" = "1" ]; then
         XINDI_CPU_QUOTA="$(ask_value "xindi CPU quota" "$XINDI_CPU_QUOTA")"
@@ -918,7 +984,7 @@ select_apply_options() {
         OBICO_CPU_QUOTA="$(ask_value "Obico CPU quota" "$OBICO_CPU_QUOTA")"
     fi
 
-    if [ "$DO_OLD_TUNING_DISABLE$DO_CPU_PERFORMANCE$DO_SERVICE_WEIGHTS$DO_STRICT_AFFINITY$DO_XINDI_LIMIT$DO_OBICO_LIMIT$DO_OBICO_STREAMING$DO_WIFI_DISABLE" = "00000000" ]; then
+    if [ "$DO_OLD_TUNING_DISABLE$DO_CPU_PERFORMANCE$DO_SERVICE_WEIGHTS$DO_STRICT_AFFINITY$DO_QIDI_SCREEN_DISABLE$DO_XINDI_LIMIT$DO_OBICO_LIMIT$DO_OBICO_STREAMING$DO_WIFI_DISABLE" = "000000000" ]; then
         echo "Nothing selected."
         return 1
     fi
@@ -929,6 +995,7 @@ select_undo_options() {
         "Re-enable old community /etc/init.d/tuning boot script"
         "Undo CPU performance governor service from this script"
         "Undo core service CPU weights and strict affinity"
+        "Re-enable QIDI screen service / xindi"
         "Undo QIDI screen service / xindi systemd limit"
         "Undo Obico CPU limit"
         "Re-enable Obico live video streaming"
@@ -940,12 +1007,13 @@ select_undo_options() {
         "CPU"
         "Advanced service scheduling"
         "QIDI screen service"
+        "QIDI screen service"
         "Obico"
         "Obico"
         "Network"
     )
 
-    MENU_SELECTED=(0 0 0 0 0 0 0)
+    MENU_SELECTED=(0 0 0 0 0 0 0 0)
 
     checkbox_menu "QiDi Plus4 Optional Tuning - Undo" || return 1
 
@@ -953,12 +1021,13 @@ select_undo_options() {
     DO_CPU_PERFORMANCE="${MENU_SELECTED[1]}"
     DO_SERVICE_WEIGHTS="${MENU_SELECTED[2]}"
     DO_STRICT_AFFINITY=0
-    DO_XINDI_LIMIT="${MENU_SELECTED[3]}"
-    DO_OBICO_LIMIT="${MENU_SELECTED[4]}"
-    DO_OBICO_STREAMING="${MENU_SELECTED[5]}"
-    DO_WIFI_DISABLE="${MENU_SELECTED[6]}"
+    DO_QIDI_SCREEN_DISABLE="${MENU_SELECTED[3]}"
+    DO_XINDI_LIMIT="${MENU_SELECTED[4]}"
+    DO_OBICO_LIMIT="${MENU_SELECTED[5]}"
+    DO_OBICO_STREAMING="${MENU_SELECTED[6]}"
+    DO_WIFI_DISABLE="${MENU_SELECTED[7]}"
 
-    if [ "$DO_OLD_TUNING_DISABLE$DO_CPU_PERFORMANCE$DO_SERVICE_WEIGHTS$DO_XINDI_LIMIT$DO_OBICO_LIMIT$DO_OBICO_STREAMING$DO_WIFI_DISABLE" = "0000000" ]; then
+    if [ "$DO_OLD_TUNING_DISABLE$DO_CPU_PERFORMANCE$DO_SERVICE_WEIGHTS$DO_QIDI_SCREEN_DISABLE$DO_XINDI_LIMIT$DO_OBICO_LIMIT$DO_OBICO_STREAMING$DO_WIFI_DISABLE" = "00000000" ]; then
         echo "Nothing selected."
         return 1
     fi
@@ -995,6 +1064,10 @@ show_apply_plan() {
         fi
     fi
 
+    if [ "$DO_QIDI_SCREEN_DISABLE" = "1" ]; then
+        qidi_screen_disabled && echo "- QIDI screen service / xindi: already disabled and masked" || echo "- QIDI screen service / xindi: will disable and mask"
+    fi
+
     if [ "$DO_XINDI_LIMIT" = "1" ]; then
         xindi_limit_applied && echo "- xindi/makerbase-client limit: already done" || echo "- xindi/makerbase-client limit: will apply/update"
     fi
@@ -1026,6 +1099,7 @@ show_undo_plan() {
     [ "$DO_OLD_TUNING_DISABLE" = "1" ] && echo "- Re-enable old community tuning boot script"
     [ "$DO_CPU_PERFORMANCE" = "1" ] && echo "- Remove CPU performance governor service from this script"
     [ "$DO_SERVICE_WEIGHTS" = "1" ] && echo "- Remove core service weights and strict affinity overrides"
+    [ "$DO_QIDI_SCREEN_DISABLE" = "1" ] && echo "- Re-enable QIDI screen service / xindi"
     [ "$DO_XINDI_LIMIT" = "1" ] && echo "- Remove xindi/makerbase-client systemd limit"
     [ "$DO_OBICO_LIMIT" = "1" ] && echo "- Remove Obico CPU limit"
     [ "$DO_OBICO_STREAMING" = "1" ] && echo "- Set Obico disable_video_streaming=False"
@@ -1056,6 +1130,7 @@ do_apply_menu() {
         install_core_service_weights
     fi
 
+    [ "$DO_QIDI_SCREEN_DISABLE" = "1" ] && disable_qidi_screen_service
     [ "$DO_XINDI_LIMIT" = "1" ] && install_xindi_limit
     [ "$DO_OBICO_LIMIT" = "1" ] && install_obico_limit
     [ "$DO_OBICO_STREAMING" = "1" ] && patch_obico_streaming_disabled
@@ -1085,6 +1160,7 @@ do_undo_menu() {
     [ "$DO_OLD_TUNING_DISABLE" = "1" ] && undo_disable_old_tuning
     [ "$DO_CPU_PERFORMANCE" = "1" ] && undo_cpu_performance
     [ "$DO_SERVICE_WEIGHTS" = "1" ] && undo_core_service_weights
+    [ "$DO_QIDI_SCREEN_DISABLE" = "1" ] && enable_qidi_screen_service
     [ "$DO_XINDI_LIMIT" = "1" ] && undo_xindi_limit
     [ "$DO_OBICO_LIMIT" = "1" ] && undo_obico_limit
     [ "$DO_OBICO_STREAMING" = "1" ] && patch_obico_streaming_enabled
@@ -1126,6 +1202,14 @@ plain_status_summary() {
     else
         echo "Scheduling mode: not applied"
     fi
+
+    qidi_screen_disabled \
+        && echo "QIDI screen service / xindi: disabled and masked" \
+        || echo "QIDI screen service / xindi: enabled or not fully disabled"
+
+    qidi_screen_processes_running \
+        && echo "QIDI screen/QIDILink processes: running" \
+        || echo "QIDI screen/QIDILink processes: not running"
 
     xindi_limit_applied \
         && echo "xindi systemd limit on CPU 0: applied" \
