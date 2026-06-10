@@ -11,6 +11,7 @@
     "enable_prime_tower": "0",
     "ensure_vertical_shell_thickness": "ensure_critical_only",
     "extra_perimeters_on_overhangs": "1",
+    "filename_format": "{input_filename_base}_{filament_type[initial_tool]}_{print_time}.gcode",
     "from": "User",
     "gap_infill_speed": "126",
     "independent_support_layer_height": "1",
