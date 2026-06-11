@@ -55,87 +55,67 @@ python screen.py
 
 ## KlipperScreen config path
 
+KlipperScreen should read its user config from:
+
+```text
+~/.config/KlipperScreen/KlipperScreen.conf
+```
+
 Create the config directory:
 
 ```bash
 mkdir -p ~/.config/KlipperScreen
 ```
 
-Edit the config:
+Copy the repo config into place from the repository root:
+
+```bash
+cp docs/external-klipperscreen-client/config/KlipperScreen/KlipperScreen.conf ~/.config/KlipperScreen/KlipperScreen.conf
+```
+
+Or, if you are already inside `docs/external-klipperscreen-client/`:
+
+```bash
+cp config/KlipperScreen/KlipperScreen.conf ~/.config/KlipperScreen/KlipperScreen.conf
+```
+
+Edit the installed config:
 
 ```bash
 nano ~/.config/KlipperScreen/KlipperScreen.conf
 ```
 
-## Example config
-
-Replace `YOUR_REAL_API_KEY_HERE` with your Moonraker API key.
+Replace the placeholder Moonraker API key with your real Moonraker API key.
 
 Do not commit your real API key to a public repo.
 
-```ini
-[main]
-default_printer: Plus4
-show_cursor: True
-keyboard_navigation: True
+## Connection options
 
-[printer Plus4]
-moonraker_host: qidi.time-puffin.ts.net
-moonraker_port: 7125
-moonraker_ssl: False
-moonraker_api_key: YOUR_REAL_API_KEY_HERE
-move_distances: 0.1, 1, 5, 10, 25, 50
+The included repo config is stored at:
 
-# Force useful laptop menu entries
-[menu __main move]
-name: Move
-icon: move
-panel: move
-
-[menu __main home_all]
-name: Home All
-icon: home
-method: printer.gcode.script
-params: {"script":"G28"}
-
-[menu __main home_x]
-name: Home X
-icon: home-x
-method: printer.gcode.script
-params: {"script":"G28 X"}
-
-[menu __main home_y]
-name: Home Y
-icon: home-y
-method: printer.gcode.script
-params: {"script":"G28 Y"}
-
-[menu __main home_z]
-name: Home Z
-icon: home-z
-method: printer.gcode.script
-params: {"script":"G28 Z"}
+```text
+docs/external-klipperscreen-client/config/KlipperScreen/KlipperScreen.conf
 ```
 
-## LAN IP alternative
+The installed config should live at:
 
-If not using the Tailscale/MagicDNS hostname, use the printer LAN IP instead:
-
-```ini
-moonraker_host: 192.168.68.118
-moonraker_port: 7125
-moonraker_ssl: False
+```text
+~/.config/KlipperScreen/KlipperScreen.conf
 ```
 
-## HTTPS / Tailscale Serve alternative
+For local LAN access, set the printer host in `~/.config/KlipperScreen/KlipperScreen.conf` to:
 
-If Moonraker is being exposed through HTTPS on port 443, use this instead:
-
-```ini
-moonraker_host: qidi.time-puffin.ts.net
-moonraker_port: 443
-moonraker_ssl: True
+```text
+192.168.68.118
 ```
+
+For Tailscale/MagicDNS access, set the printer host to:
+
+```text
+qidi.time-puffin.ts.net
+```
+
+For HTTPS through Tailscale Serve, set the port to `443` and enable SSL in `~/.config/KlipperScreen/KlipperScreen.conf`.
 
 Only use the HTTPS version if this test works:
 
