@@ -6,7 +6,7 @@
         "QIDI PLA Rapido - adjusted"
     ],
     "filament_start_gcode": [
-        " {if filament_extruder_id == initial_no_support_extruder}\nG90\nM83\nG92 E0\n\n{if first_layer_print_min[1] > 8}\n    G1 Z0.28 F1200\n    G1 X55 Y3 F12000\n    G1 E2.0 F300\n    G1 X235 E18.0 F650\n    G1 Y3.6 F12000\n    G1 X55 E12.0 F650\n\n{elsif first_layer_print_min[0] > 8}\n    G1 Z0.28 F1200\n    G1 X3 Y25 F12000\n    G1 E2.0 F300\n    G1 Y205 E18.0 F650\n    G1 X3.6 F12000\n    G1 Y25 E12.0 F650\n\n{elsif first_layer_print_max[1] < 297}\n    G1 Z0.28 F1200\n    G1 X55 Y302 F12000\n    G1 E2.0 F300\n    G1 X235 E18.0 F650\n    G1 Y301.4 F12000\n    G1 X55 E12.0 F650\n\n{elsif first_layer_print_max[0] < 297}\n    G1 Z0.28 F1200\n    G1 X302 Y25 F12000\n    G1 E2.0 F300\n    G1 Y205 E18.0 F650\n    G1 X301.4 F12000\n    G1 Y25 E12.0 F650\n\n{endif}\n\nG92 E0\n{endif}"
+        "{if filament_extruder_id == initial_tool}\nG90\nM83\nG92 E0\n\n{if first_layer_print_min[1] > 8}\n    G1 Z0.28 F1200\n    G1 X55 Y3 F12000\n    G1 E2.0 F300\n    G1 X235 E18.0 F650\n    G1 Y3.6 F12000\n    G1 X55 E12.0 F650\n\n{elsif first_layer_print_min[0] > 8}\n    G1 Z0.28 F1200\n    G1 X3 Y25 F12000\n    G1 E2.0 F300\n    G1 Y205 E18.0 F650\n    G1 X3.6 F12000\n    G1 Y25 E12.0 F650\n\n{elsif first_layer_print_max[1] < 297}\n    G1 Z0.28 F1200\n    G1 X55 Y302 F12000\n    G1 E2.0 F300\n    G1 X235 E18.0 F650\n    G1 Y301.4 F12000\n    G1 X55 E12.0 F650\n\n{elsif first_layer_print_max[0] < 297}\n    G1 Z0.28 F1200\n    G1 X302 Y25 F12000\n    G1 E2.0 F300\n    G1 Y205 E18.0 F650\n    G1 X301.4 F12000\n    G1 Y25 E12.0 F650\n\n{endif}\n\nG92 E0\n{endif}"
     ],
     "from": "User",
     "inherits": "QIDI PLA Rapido @Qidi X-Plus 4 0.4 nozzle",
