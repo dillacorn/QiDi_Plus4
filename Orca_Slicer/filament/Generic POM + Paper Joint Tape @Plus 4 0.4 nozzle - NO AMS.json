@@ -1,0 +1,90 @@
+{
+    "chamber_temperature": [
+        "55"
+    ],
+    "close_fan_the_first_x_layers": [
+        "10"
+    ],
+    "complete_print_exhaust_fan_speed": [
+        "100"
+    ],
+    "during_print_exhaust_fan_speed": [
+        "20"
+    ],
+    "enable_overhang_bridge_fan": [
+        "0"
+    ],
+    "fan_max_speed": [
+        "0"
+    ],
+    "fan_min_speed": [
+        "0"
+    ],
+    "filament_density": [
+        "1.41"
+    ],
+    "filament_extruder_variant": [
+        "Direct Drive Standard"
+    ],
+    "filament_flow_ratio": [
+        "1"
+    ],
+    "filament_max_volumetric_speed": [
+        "2.5"
+    ],
+    "filament_settings_id": [
+        "Generic POM + Paper Joint Tape @Plus 4 0.4 nozzle - NO AMS"
+    ],
+    "filament_start_gcode": [
+        "{if filament_extruder_id == initial_tool}\nG90\nM83\nG92 E0\n\n{if first_layer_print_min[1] > 8}\n    G1 Z0.28 F1200\n    G1 X55 Y3 F12000\n    G1 E2.0 F300\n    G1 X235 E18.0 F650\n    G1 Y3.6 F12000\n    G1 X55 E12.0 F650\n\n{elsif first_layer_print_min[0] > 8}\n    G1 Z0.28 F1200\n    G1 X3 Y25 F12000\n    G1 E2.0 F300\n    G1 Y205 E18.0 F650\n    G1 X3.6 F12000\n    G1 Y25 E12.0 F650\n\n{elsif first_layer_print_max[1] < 297}\n    G1 Z0.28 F1200\n    G1 X55 Y302 F12000\n    G1 E2.0 F300\n    G1 X235 E18.0 F650\n    G1 Y301.4 F12000\n    G1 X55 E12.0 F650\n\n{elsif first_layer_print_max[0] < 297}\n    G1 Z0.28 F1200\n    G1 X302 Y25 F12000\n    G1 E2.0 F300\n    G1 Y205 E18.0 F650\n    G1 X301.4 F12000\n    G1 Y25 E12.0 F650\n\n{endif}\n\nG92 E0\n{endif}"
+    ],
+    "filament_type": [
+        "POM"
+    ],
+    "from": "User",
+    "hot_plate_temp": [
+        "60"
+    ],
+    "hot_plate_temp_initial_layer": [
+        "60"
+    ],
+    "inherits": "Qidi Generic ABS @Qidi X-Plus 4 0.4 nozzle",
+    "internal_bridge_fan_speed": [
+        "0"
+    ],
+    "ironing_fan_speed": [
+        "0"
+    ],
+    "name": "Generic POM + Paper Joint Tape @Plus 4 0.4 nozzle - NO AMS",
+    "nozzle_temperature": [
+        "215"
+    ],
+    "nozzle_temperature_initial_layer": [
+        "215"
+    ],
+    "nozzle_temperature_range_high": [
+        "220"
+    ],
+    "nozzle_temperature_range_low": [
+        "210"
+    ],
+    "overhang_fan_speed": [
+        "0"
+    ],
+    "pressure_advance": [
+        "0.04"
+    ],
+    "slow_down_layer_time": [
+        "8"
+    ],
+    "slow_down_min_speed": [
+        "10"
+    ],
+    "support_material_interface_fan_speed": [
+        "0"
+    ],
+    "temperature_vitrification": [
+        "150"
+    ],
+    "version": "2.3.2.60"
+}

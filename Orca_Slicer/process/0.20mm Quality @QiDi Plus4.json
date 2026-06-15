@@ -52,7 +52,6 @@
     ],
     "print_settings_id": "0.20mm Quality @QiDi Plus4",
     "raft_first_layer_expansion": "3.5",
-    "resolution": "0.011",
     "seam_gap": "9%",
     "slice_closing_radius": "0.043",
     "small_area_infill_flow_compensation": "1",
