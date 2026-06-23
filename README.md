@@ -117,6 +117,13 @@ While doing this, apply light pressure to the center of the bed so it sits compl
 
 I recommend printing these mods in ASA.
 
+### CNC-Machined Aluminum Extruder Tension Bar
+
+After roughly six months of heavy use, my stock plastic extruder tension bar developed significant warping and flex. I highly recommend replacing it with the CNC-machined aluminum version for better long-term rigidity and consistent extruder tension.
+
+- [QIDI 3D Printer Aluminum Extruder Tension Bar Upgrade](https://www.etsy.com/listing/4514278258/qidi-3d-printer-aluminum-extruder)
+- [Photos, installation, and comparison](docs/Alu_Tension_Bar/README.md)
+
 ### HEPA filter and activated charcoal setup
 
 * [Flush-fit HEPA filter with refillable charcoal tray](https://www.printables.com/model/1148756-qidi-plus-4-hepa-filter-flush-fit-with-refillable)
