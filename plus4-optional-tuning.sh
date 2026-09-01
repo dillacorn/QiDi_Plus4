@@ -453,9 +453,31 @@ EOF
     systemctl daemon-reload
 }
 
+qidi_screen_backlight_off() {
+    local tty="${1:-/dev/ttyS1}"
+
+    if [ ! -c "$tty" ]; then
+        echo "Warning: QIDI display serial device not found: $tty"
+        return 0
+    fi
+
+    if ! stty -F "$tty" 115200 raw -echo; then
+        echo "Warning: could not configure QIDI display serial device: $tty"
+        return 0
+    fi
+
+    if ! printf 'dim=0\xff\xff\xff' > "$tty"; then
+        echo "Warning: could not turn off QIDI display backlight"
+        return 0
+    fi
+
+    echo "Turned off: QIDI display backlight"
+}
+
 disable_qidi_screen_service() {
     if qidi_screen_disabled; then
         echo "Already done: QIDI screen service / xindi is disabled and masked"
+        qidi_screen_backlight_off
         return 0
     fi
 
@@ -468,6 +490,9 @@ disable_qidi_screen_service() {
 
     systemctl daemon-reload
     echo "Disabled: QIDI screen service / xindi / QIDILink stack"
+
+    sleep 1
+    qidi_screen_backlight_off
 }
 
 enable_qidi_screen_service() {
