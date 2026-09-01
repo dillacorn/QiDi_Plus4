@@ -123,12 +123,33 @@ add_restart_service() {
 }
 
 restart_changed_services() {
-    if [ "${#RESTART_SERVICES[@]}" -gt 0 ]; then
-        echo
-        echo "Restarting changed services:"
-        printf '  %s\n' "${RESTART_SERVICES[@]}"
-        systemctl restart "${RESTART_SERVICES[@]}"
-    fi
+    local unit=""
+    local restarted=0
+
+    for unit in "${RESTART_SERVICES[@]}"; do
+        if [ "$(systemctl is-enabled "$unit" 2>/dev/null || true)" = "masked" ]; then
+            echo "Skipping restart: $unit is masked"
+            continue
+        fi
+
+        if ! systemctl is-active --quiet "$unit" 2>/dev/null; then
+            echo "Skipping restart: $unit is not active"
+            continue
+        fi
+
+        if [ "$restarted" -eq 0 ]; then
+            echo
+            echo "Restarting changed services:"
+            restarted=1
+        fi
+
+        echo "  $unit"
+
+        if ! systemctl restart "$unit"; then
+            echo "Warning: failed to restart $unit"
+            systemctl --no-pager --full status "$unit" 2>&1 || true
+        fi
+    done
 }
 
 write_if_changed() {
