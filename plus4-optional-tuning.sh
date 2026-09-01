@@ -450,16 +450,46 @@ disable_qidi_screen_service() {
 }
 
 enable_qidi_screen_service() {
-    systemctl unmask makerbase-client.service >/dev/null 2>&1 || true
+    local unit="makerbase-client.service"
 
-    if service_exists "makerbase-client.service"; then
-        systemctl enable --now makerbase-client.service >/dev/null 2>&1 || true
-        echo "Re-enabled: QIDI screen service / xindi stack"
-    else
-        echo "Cannot re-enable QIDI screen service: makerbase-client.service not found"
+    systemctl unmask "$unit" >/dev/null 2>&1 || true
+    systemctl daemon-reload
+
+    if ! service_exists "$unit"; then
+        echo "Cannot re-enable QIDI screen service: $unit not found"
+        return 0
     fi
 
-    systemctl daemon-reload
+    if ! systemctl enable "$unit" >/dev/null 2>&1; then
+        echo "Warning: could not enable $unit for boot"
+        systemctl is-enabled "$unit" 2>/dev/null || true
+    fi
+
+    systemctl reset-failed "$unit" >/dev/null 2>&1 || true
+
+    if ! systemctl restart "$unit"; then
+        echo "Failed: QIDI screen service / xindi did not start"
+        systemctl --no-pager --full status "$unit" 2>&1 || true
+        journalctl -u "$unit" -n 40 --no-pager 2>&1 || true
+        return 0
+    fi
+
+    sleep 2
+
+    if ! systemctl is-active --quiet "$unit"; then
+        echo "Failed: $unit is not active after restart"
+        systemctl --no-pager --full status "$unit" 2>&1 || true
+        journalctl -u "$unit" -n 40 --no-pager 2>&1 || true
+        return 0
+    fi
+
+    echo "Re-enabled: QIDI screen service / xindi stack"
+
+    if qidi_screen_processes_running; then
+        echo "Verified: QIDI screen / xindi process is running"
+    else
+        echo "Warning: $unit is active, but no expected xindi/QIDILink process was detected yet"
+    fi
 }
 
 install_xindi_limit() {
