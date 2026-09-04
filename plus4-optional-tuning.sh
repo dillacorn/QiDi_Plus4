@@ -20,6 +20,7 @@ DO_QIDI_SCREEN_DISABLE=0
 DO_XINDI_LIMIT=0
 DO_OBICO_LIMIT=0
 DO_OBICO_STREAMING=0
+DO_CLOCK_RECOVERY=0
 DO_WIFI_DISABLE=0
 
 XINDI_CPU_QUOTA="25%"
@@ -100,6 +101,7 @@ backup_current_state() {
     backup_path "/etc/systemd/system/plus4-cpu-performance.service" "$backup_dir"
     backup_path "/usr/local/sbin/plus4-cpu-performance" "$backup_dir"
     backup_path "/home/mks/printer_data/config/moonraker-obico.cfg" "$backup_dir"
+    backup_path "/etc/systemd/timesyncd.conf.d/plus4-clock-recovery.conf" "$backup_dir"
     backup_path "/etc/default/cpufrequtils" "$backup_dir"
     backup_path "/etc/init.d/tuning" "$backup_dir"
 
@@ -273,6 +275,14 @@ obico_logging_info() {
 
     [ -f "$cfg" ] \
         && grep -Eiq '^[[:space:]]*level[[:space:]]*=[[:space:]]*INFO[[:space:]]*$' "$cfg"
+}
+
+clock_recovery_applied() {
+    local file="/etc/systemd/timesyncd.conf.d/plus4-clock-recovery.conf"
+
+    [ -f "$file" ] \
+        && grep -Fxq "[Time]" "$file" \
+        && grep -Fxq "NTP=162.159.200.1 162.159.200.123" "$file"
 }
 
 wifi_disable_applied() {
@@ -710,6 +720,28 @@ PY
     echo "Updated: Obico live video streaming enabled"
 }
 
+install_clock_recovery() {
+    local file="/etc/systemd/timesyncd.conf.d/plus4-clock-recovery.conf"
+
+    if ! service_exists "systemd-timesyncd.service"; then
+        echo "Skipping: systemd-timesyncd.service not found"
+        return 0
+    fi
+
+    if clock_recovery_applied; then
+        echo "Already done: DNS-independent clock recovery"
+        return 0
+    fi
+
+    write_if_changed "$file" <<'EOF' || true
+[Time]
+NTP=162.159.200.1 162.159.200.123
+EOF
+
+    add_restart_service "systemd-timesyncd.service"
+    echo "Configured: DNS-independent clock recovery using fixed Cloudflare NTP IPs"
+}
+
 disable_wifi_if_safe() {
     if wifi_disable_applied; then
         echo "Already done: Wi-Fi service/interface disabled"
@@ -827,6 +859,20 @@ undo_obico_limit() {
     add_restart_service "moonraker-obico.service"
     systemctl daemon-reload
     echo "Removed: Obico CPU limit"
+}
+
+undo_clock_recovery() {
+    local file="/etc/systemd/timesyncd.conf.d/plus4-clock-recovery.conf"
+
+    if [ ! -f "$file" ]; then
+        echo "Already done: DNS-independent clock recovery is not installed"
+        return 0
+    fi
+
+    rm -f "$file"
+    rmdir /etc/systemd/timesyncd.conf.d 2>/dev/null || true
+    add_restart_service "systemd-timesyncd.service"
+    echo "Removed: DNS-independent clock recovery"
 }
 
 undo_wifi_disable() {
@@ -984,6 +1030,12 @@ checkbox_menu() {
                     toggle_menu_item "$idx"
                 fi
                 ;;
+            0)
+                idx=9
+                if [ "$idx" -le "$max_index" ]; then
+                    toggle_menu_item "$idx"
+                fi
+                ;;
             $'\e')
                 IFS= read -rsn2 -t 0.1 rest || true
                 case "$rest" in
@@ -1020,6 +1072,7 @@ select_apply_options() {
         "Limit QIDI screen service / xindi on CPU 0"
         "Keep Obico running but lower priority and cap CPU"
         "Disable Obico live video streaming"
+        "Enable DNS-independent clock recovery"
         "Disable Wi-Fi service/interface if Ethernet is active"
     )
 
@@ -1033,9 +1086,10 @@ select_apply_options() {
         "Obico"
         "Obico"
         "Network"
+        "Network"
     )
 
-    MENU_SELECTED=(0 0 0 0 0 0 0 0 0)
+    MENU_SELECTED=(0 0 0 0 0 0 0 0 0 0)
 
     checkbox_menu "QiDi Plus4 Optional Tuning - Apply" || return 1
 
@@ -1047,7 +1101,8 @@ select_apply_options() {
     DO_XINDI_LIMIT="${MENU_SELECTED[5]}"
     DO_OBICO_LIMIT="${MENU_SELECTED[6]}"
     DO_OBICO_STREAMING="${MENU_SELECTED[7]}"
-    DO_WIFI_DISABLE="${MENU_SELECTED[8]}"
+    DO_CLOCK_RECOVERY="${MENU_SELECTED[8]}"
+    DO_WIFI_DISABLE="${MENU_SELECTED[9]}"
 
     resolve_scheduling_conflict
     resolve_qidi_screen_conflict
@@ -1060,7 +1115,7 @@ select_apply_options() {
         OBICO_CPU_QUOTA="$(ask_value "Obico CPU quota" "$OBICO_CPU_QUOTA")"
     fi
 
-    if [ "$DO_OLD_TUNING_DISABLE$DO_CPU_PERFORMANCE$DO_SERVICE_WEIGHTS$DO_STRICT_AFFINITY$DO_QIDI_SCREEN_DISABLE$DO_XINDI_LIMIT$DO_OBICO_LIMIT$DO_OBICO_STREAMING$DO_WIFI_DISABLE" = "000000000" ]; then
+    if [ "$DO_OLD_TUNING_DISABLE$DO_CPU_PERFORMANCE$DO_SERVICE_WEIGHTS$DO_STRICT_AFFINITY$DO_QIDI_SCREEN_DISABLE$DO_XINDI_LIMIT$DO_OBICO_LIMIT$DO_OBICO_STREAMING$DO_CLOCK_RECOVERY$DO_WIFI_DISABLE" = "0000000000" ]; then
         echo "Nothing selected."
         return 1
     fi
@@ -1075,6 +1130,7 @@ select_undo_options() {
         "Undo QIDI screen service / xindi systemd limit"
         "Undo Obico CPU limit"
         "Re-enable Obico live video streaming"
+        "Undo DNS-independent clock recovery"
         "Re-enable Wi-Fi service/interface"
     )
 
@@ -1087,9 +1143,10 @@ select_undo_options() {
         "Obico"
         "Obico"
         "Network"
+        "Network"
     )
 
-    MENU_SELECTED=(0 0 0 0 0 0 0 0)
+    MENU_SELECTED=(0 0 0 0 0 0 0 0 0)
 
     checkbox_menu "QiDi Plus4 Optional Tuning - Undo" || return 1
 
@@ -1101,9 +1158,10 @@ select_undo_options() {
     DO_XINDI_LIMIT="${MENU_SELECTED[4]}"
     DO_OBICO_LIMIT="${MENU_SELECTED[5]}"
     DO_OBICO_STREAMING="${MENU_SELECTED[6]}"
-    DO_WIFI_DISABLE="${MENU_SELECTED[7]}"
+    DO_CLOCK_RECOVERY="${MENU_SELECTED[7]}"
+    DO_WIFI_DISABLE="${MENU_SELECTED[8]}"
 
-    if [ "$DO_OLD_TUNING_DISABLE$DO_CPU_PERFORMANCE$DO_SERVICE_WEIGHTS$DO_QIDI_SCREEN_DISABLE$DO_XINDI_LIMIT$DO_OBICO_LIMIT$DO_OBICO_STREAMING$DO_WIFI_DISABLE" = "00000000" ]; then
+    if [ "$DO_OLD_TUNING_DISABLE$DO_CPU_PERFORMANCE$DO_SERVICE_WEIGHTS$DO_QIDI_SCREEN_DISABLE$DO_XINDI_LIMIT$DO_OBICO_LIMIT$DO_OBICO_STREAMING$DO_CLOCK_RECOVERY$DO_WIFI_DISABLE" = "000000000" ]; then
         echo "Nothing selected."
         return 1
     fi
@@ -1160,6 +1218,10 @@ show_apply_plan() {
         fi
     fi
 
+    if [ "$DO_CLOCK_RECOVERY" = "1" ]; then
+        clock_recovery_applied && echo "- DNS-independent clock recovery: already done" || echo "- DNS-independent clock recovery: will apply"
+    fi
+
     if [ "$DO_WIFI_DISABLE" = "1" ]; then
         wifi_disable_applied && echo "- Wi-Fi disable: already done" || echo "- Wi-Fi disable: will apply if safe"
     fi
@@ -1179,6 +1241,7 @@ show_undo_plan() {
     [ "$DO_XINDI_LIMIT" = "1" ] && echo "- Remove xindi/makerbase-client systemd limit"
     [ "$DO_OBICO_LIMIT" = "1" ] && echo "- Remove Obico CPU limit"
     [ "$DO_OBICO_STREAMING" = "1" ] && echo "- Set Obico disable_video_streaming=False"
+    [ "$DO_CLOCK_RECOVERY" = "1" ] && echo "- Remove DNS-independent clock recovery"
     [ "$DO_WIFI_DISABLE" = "1" ] && echo "- Re-enable makerbase-wlan0.service and wlan0"
     echo "- Backup current files before undo"
     echo "- Restart only changed/touched services"
@@ -1210,6 +1273,7 @@ do_apply_menu() {
     [ "$DO_XINDI_LIMIT" = "1" ] && install_xindi_limit
     [ "$DO_OBICO_LIMIT" = "1" ] && install_obico_limit
     [ "$DO_OBICO_STREAMING" = "1" ] && patch_obico_streaming_disabled
+    [ "$DO_CLOCK_RECOVERY" = "1" ] && install_clock_recovery
     [ "$DO_WIFI_DISABLE" = "1" ] && disable_wifi_if_safe
 
     restart_changed_services
@@ -1240,6 +1304,7 @@ do_undo_menu() {
     [ "$DO_XINDI_LIMIT" = "1" ] && undo_xindi_limit
     [ "$DO_OBICO_LIMIT" = "1" ] && undo_obico_limit
     [ "$DO_OBICO_STREAMING" = "1" ] && patch_obico_streaming_enabled
+    [ "$DO_CLOCK_RECOVERY" = "1" ] && undo_clock_recovery
     [ "$DO_WIFI_DISABLE" = "1" ] && undo_wifi_disable
 
     restart_changed_services
@@ -1302,6 +1367,10 @@ plain_status_summary() {
     obico_logging_info \
         && echo "Obico logging level INFO: applied" \
         || echo "Obico logging level INFO: not applied"
+
+    clock_recovery_applied \
+        && echo "DNS-independent clock recovery: applied" \
+        || echo "DNS-independent clock recovery: not applied"
 
     wifi_disable_applied \
         && echo "Wi-Fi service/interface: disabled" \
