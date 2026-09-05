@@ -97,6 +97,8 @@ backup_current_state() {
     backup_path "/etc/systemd/system/nginx.service.d/override.conf" "$backup_dir"
     backup_path "/etc/systemd/system/makerbase-client.service" "$backup_dir"
     backup_path "/etc/systemd/system/makerbase-client.service.d/override.conf" "$backup_dir"
+    backup_path "/etc/systemd/system/plus4-qidi-screen-sleep.service" "$backup_dir"
+    backup_path "/usr/local/sbin/plus4-qidi-screen-sleep" "$backup_dir"
     backup_path "/etc/systemd/system/moonraker-obico.service.d/override.conf" "$backup_dir"
     backup_path "/etc/systemd/system/plus4-cpu-performance.service" "$backup_dir"
     backup_path "/usr/local/sbin/plus4-cpu-performance" "$backup_dir"
@@ -235,6 +237,12 @@ xindi_limit_applied() {
         && grep -Fxq "CPUAffinity=0" "$file" 2>/dev/null
 }
 
+qidi_screen_boot_sleep_applied() {
+    [ -x /usr/local/sbin/plus4-qidi-screen-sleep ] \
+        && [ -f /etc/systemd/system/plus4-qidi-screen-sleep.service ] \
+        && systemctl is-enabled --quiet plus4-qidi-screen-sleep.service 2>/dev/null
+}
+
 qidi_screen_disabled() {
     local enabled_state=""
 
@@ -248,7 +256,11 @@ qidi_screen_disabled() {
         return 1
     fi
 
-    ! pgrep -f '/root/xindi/build/xindi|/root/xindi/build/start.sh|/root/QIDILink-client/udp_server' >/dev/null 2>&1
+    if pgrep -f '/root/xindi/build/xindi|/root/xindi/build/start.sh|/root/QIDILink-client/udp_server' >/dev/null 2>&1; then
+        return 1
+    fi
+
+    qidi_screen_boot_sleep_applied
 }
 
 qidi_screen_processes_running() {
@@ -502,7 +514,104 @@ qidi_screen_set_sleep() {
     fi
 }
 
+install_qidi_screen_boot_sleep() {
+    write_if_changed /usr/local/sbin/plus4-qidi-screen-sleep <<'EOF' || true
+#!/bin/sh
+set -u
+
+unit="makerbase-client.service"
+tty="/dev/ttyS1"
+
+enabled_state="$(systemctl is-enabled "$unit" 2>/dev/null || true)"
+[ "$enabled_state" = "masked" ] || exit 0
+
+tries=0
+while [ ! -c "$tty" ] && [ "$tries" -lt 20 ]; do
+    sleep 1
+    tries=$((tries + 1))
+done
+
+if [ ! -c "$tty" ]; then
+    echo "QIDI display sleep skipped: $tty did not appear"
+    exit 0
+fi
+
+# The host UART can exist before the TJC panel has finished its own boot.
+sleep 5
+
+enabled_state="$(systemctl is-enabled "$unit" 2>/dev/null || true)"
+[ "$enabled_state" = "masked" ] || exit 0
+
+if pgrep -f '/root/xindi/build/xindi|/root/xindi/build/start.sh|/root/QIDILink-client/udp_server' >/dev/null 2>&1; then
+    echo "QIDI display sleep skipped: screen process is running"
+    exit 0
+fi
+
+command -v timeout >/dev/null 2>&1 || exit 0
+
+timeout 3 stty -F "$tty" 115200 raw -echo clocal || exit 0
+
+if timeout 3 sh -c 'printf "sleep=1\377\377\377" > "$1"' sh "$tty"; then
+    echo "QIDI display sleep command sent"
+else
+    echo "QIDI display sleep command failed or timed out"
+fi
+
+exit 0
+EOF
+
+    chmod 755 /usr/local/sbin/plus4-qidi-screen-sleep
+
+    write_if_changed /etc/systemd/system/plus4-qidi-screen-sleep.service <<'EOF' || true
+[Unit]
+Description=QiDi Plus4 display sleep when stock screen service is disabled
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/plus4-qidi-screen-sleep
+RemainAfterExit=yes
+TimeoutStartSec=35
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    systemctl daemon-reload
+
+    if ! systemctl enable plus4-qidi-screen-sleep.service >/dev/null 2>&1; then
+        echo "Warning: could not enable plus4-qidi-screen-sleep.service for boot"
+        return 0
+    fi
+
+    echo "Enabled: QIDI display sleep at boot while stock screen service is masked"
+}
+
+remove_qidi_screen_boot_sleep() {
+    local removed=0
+
+    systemctl disable --now plus4-qidi-screen-sleep.service >/dev/null 2>&1 || true
+
+    if [ -f /etc/systemd/system/plus4-qidi-screen-sleep.service ]; then
+        rm -f /etc/systemd/system/plus4-qidi-screen-sleep.service
+        removed=1
+    fi
+
+    if [ -f /usr/local/sbin/plus4-qidi-screen-sleep ]; then
+        rm -f /usr/local/sbin/plus4-qidi-screen-sleep
+        removed=1
+    fi
+
+    systemctl daemon-reload
+
+    if [ "$removed" -eq 1 ]; then
+        echo "Removed: QIDI display sleep-at-boot helper"
+    fi
+}
+
 disable_qidi_screen_service() {
+    install_qidi_screen_boot_sleep
+
     if qidi_screen_disabled; then
         echo "Already done: QIDI screen service / xindi is disabled and masked"
         qidi_screen_set_sleep 1
@@ -525,6 +634,8 @@ disable_qidi_screen_service() {
 
 enable_qidi_screen_service() {
     local unit="makerbase-client.service"
+
+    remove_qidi_screen_boot_sleep
 
     systemctl unmask "$unit" >/dev/null 2>&1 || true
     systemctl daemon-reload
@@ -1225,7 +1336,7 @@ show_apply_plan() {
     fi
 
     if [ "$DO_QIDI_SCREEN_DISABLE" = "1" ]; then
-        qidi_screen_disabled && echo "- QIDI screen service / xindi: already disabled and masked" || echo "- QIDI screen service / xindi: will disable and mask"
+        qidi_screen_disabled && echo "- QIDI screen service / xindi: already disabled and persistent" || echo "- QIDI screen service / xindi: will disable/mask and persist screen sleep across boot"
     fi
 
     if [ "$DO_XINDI_LIMIT" = "1" ]; then
@@ -1263,7 +1374,7 @@ show_undo_plan() {
     [ "$DO_OLD_TUNING_DISABLE" = "1" ] && echo "- Re-enable old community tuning boot script"
     [ "$DO_CPU_PERFORMANCE" = "1" ] && echo "- Remove CPU performance governor service from this script"
     [ "$DO_SERVICE_WEIGHTS" = "1" ] && echo "- Remove core service weights and strict affinity overrides"
-    [ "$DO_QIDI_SCREEN_DISABLE" = "1" ] && echo "- Re-enable QIDI screen service / xindi"
+    [ "$DO_QIDI_SCREEN_DISABLE" = "1" ] && echo "- Remove boot screen-sleep helper and re-enable QIDI screen service / xindi"
     [ "$DO_XINDI_LIMIT" = "1" ] && echo "- Remove xindi/makerbase-client systemd limit"
     [ "$DO_OBICO_LIMIT" = "1" ] && echo "- Remove Obico CPU limit"
     [ "$DO_OBICO_STREAMING" = "1" ] && echo "- Set Obico disable_video_streaming=False"
@@ -1371,7 +1482,7 @@ plain_status_summary() {
     fi
 
     qidi_screen_disabled \
-        && echo "QIDI screen service / xindi: disabled and masked" \
+        && echo "QIDI screen service / xindi: disabled, masked, and boot-persistent" \
         || echo "QIDI screen service / xindi: enabled or not fully disabled"
 
     qidi_screen_processes_running \
