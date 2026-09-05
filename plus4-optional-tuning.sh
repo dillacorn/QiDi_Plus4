@@ -471,13 +471,13 @@ qidi_screen_backlight_off() {
         return 0
     fi
 
-    if ! stty -F "$tty" 115200 raw -echo; then
+    if ! stty -F "$tty" 115200 raw -echo clocal; then
         echo "Warning: could not configure QIDI display serial device: $tty"
         return 0
     fi
 
-    if ! printf 'dim=0\xff\xff\xff' > "$tty"; then
-        echo "Warning: could not turn off QIDI display backlight"
+    if ! timeout 3 sh -c 'printf "sleep=1\xff\xff\xff" > "$1"' sh "$tty"; then
+        echo "Warning: QIDI display sleep command failed or timed out"
         return 0
     fi
 
