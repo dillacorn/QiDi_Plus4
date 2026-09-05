@@ -463,11 +463,25 @@ EOF
     systemctl daemon-reload
 }
 
-qidi_screen_backlight_off() {
-    local tty="${1:-/dev/ttyS1}"
+qidi_screen_set_sleep() {
+    local state="$1"
+    local tty="${2:-/dev/ttyS1}"
+
+    case "$state" in
+        0|1) ;;
+        *)
+            echo "Warning: invalid QIDI display sleep state: $state"
+            return 0
+            ;;
+    esac
 
     if [ ! -c "$tty" ]; then
         echo "Warning: QIDI display serial device not found: $tty"
+        return 0
+    fi
+
+    if ! command -v timeout >/dev/null 2>&1; then
+        echo "Warning: timeout command not found; skipping QIDI display sleep command"
         return 0
     fi
 
@@ -476,33 +490,37 @@ qidi_screen_backlight_off() {
         return 0
     fi
 
-    if ! timeout 3 sh -c 'printf "sleep=1\xff\xff\xff" > "$1"' sh "$tty"; then
+    if ! timeout 3 sh -c 'printf "sleep=%s\377\377\377" "$2" > "$1"' sh "$tty" "$state"; then
         echo "Warning: QIDI display sleep command failed or timed out"
         return 0
     fi
 
-    echo "Turned off: QIDI display backlight"
+    if [ "$state" = "1" ]; then
+        echo "Put QIDI display to sleep"
+    else
+        echo "Woke QIDI display"
+    fi
 }
 
 disable_qidi_screen_service() {
     if qidi_screen_disabled; then
         echo "Already done: QIDI screen service / xindi is disabled and masked"
-        qidi_screen_backlight_off
+        qidi_screen_set_sleep 1
         return 0
     fi
 
     systemctl disable --now makerbase-client.service >/dev/null 2>&1 || true
-    systemctl mask makerbase-client.service >/dev/null 2>&1 || true
 
     pkill -f '/root/xindi/build/xindi' >/dev/null 2>&1 || true
     pkill -f '/root/xindi/build/start.sh' >/dev/null 2>&1 || true
     pkill -f '/root/QIDILink-client/udp_server' >/dev/null 2>&1 || true
 
+    sleep 1
+    qidi_screen_set_sleep 1
+
+    systemctl mask makerbase-client.service >/dev/null 2>&1 || true
     systemctl daemon-reload
     echo "Disabled: QIDI screen service / xindi / QIDILink stack"
-
-    sleep 1
-    qidi_screen_backlight_off
 }
 
 enable_qidi_screen_service() {
@@ -520,6 +538,14 @@ enable_qidi_screen_service() {
         echo "Warning: could not enable $unit for boot"
         systemctl is-enabled "$unit" 2>/dev/null || true
     fi
+
+    systemctl stop "$unit" >/dev/null 2>&1 || true
+    pkill -f '/root/xindi/build/xindi' >/dev/null 2>&1 || true
+    pkill -f '/root/xindi/build/start.sh' >/dev/null 2>&1 || true
+    pkill -f '/root/QIDILink-client/udp_server' >/dev/null 2>&1 || true
+
+    sleep 1
+    qidi_screen_set_sleep 0
 
     systemctl reset-failed "$unit" >/dev/null 2>&1 || true
 
