@@ -38,7 +38,7 @@
     ],
     "default_print_profile": "0.20mm Standard @Qidi XPlus4",
     "deretraction_speed": [
-        "15"
+        "0"
     ],
     "disable_m73": "0",
     "emit_machine_limits_to_gcode": "1",
@@ -154,7 +154,7 @@
         "0"
     ],
     "machine_pause_gcode": "PAUSE",
-    "machine_start_gcode": "PRINT_START BED=[bed_temperature_initial_layer_single] HOTEND=[nozzle_temperature_initial_layer] PURGETEMP=[nozzle_temperature_range_high] CHAMBER=[chamber_temperature] EXTRUDER=0 AMS=0 STARTUP_FLUSH=AUTO\nSET_PRINT_STATS_INFO TOTAL_LAYER=[total_layer_count]\nM83\nG92 E0\nG90",
+    "machine_start_gcode": "PRINT_START BED=[bed_temperature_initial_layer_single] HOTEND=[nozzle_temperature_initial_layer] PURGETEMP=[nozzle_temperature_range_high] CHAMBER=[chamber_temperature] EXTRUDER=0 AMS=0 SOURCE=EXTERNAL STARTUP_FLUSH=AUTO\nSET_PRINT_STATS_INFO TOTAL_LAYER=[total_layer_count]\nM83\nG92 E0\nG90",
     "machine_tool_change_time": "0",
     "machine_unload_filament_time": "0",
     "manual_filament_change": "0",
@@ -167,7 +167,7 @@
         "0.08"
     ],
     "min_resonance_avoidance_speed": "70",
-    "name": "Qidi Plus4 0.4 nozzle - NO AMS - TPU",
+    "name": "Qidi Plus4 0.4 nozzle - EXTERNAL SPOOL",
     "nozzle_diameter": [
         "0.4"
     ],
@@ -203,8 +203,8 @@
         "Direct Drive Standard"
     ],
     "printer_model": "Qidi X-Plus 4",
-    "printer_notes": "",
-    "printer_settings_id": "Qidi Plus4 0.4 nozzle - NO AMS - TPU",
+    "printer_notes": "External spool only. PRINT_START refuses to begin while the QIDI Box still reports a loaded/synchronized slot.",
+    "printer_settings_id": "Qidi Plus4 0.4 nozzle - EXTERNAL SPOOL",
     "printer_structure": "undefine",
     "printer_technology": "FFF",
     "printer_variant": "0.4",
@@ -244,10 +244,10 @@
         "0.35"
     ],
     "retraction_minimum_travel": [
-        "5"
+        "2"
     ],
     "retraction_speed": [
-        "15"
+        "30"
     ],
     "scan_first_layer": "0",
     "silent_mode": "0",
@@ -279,7 +279,7 @@
     "wrapping_detection_layers": "20",
     "wrapping_exclude_area": [],
     "z_hop": [
-        "0"
+        "0.4"
     ],
     "z_hop_types": [
         "Auto Lift"

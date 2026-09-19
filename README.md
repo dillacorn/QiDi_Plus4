@@ -12,12 +12,19 @@ My Orca Slicer settings for the QiDi Plus4, with QiDi Box support and maintained
 * For mixed temperature swaps, manual unload and manual load is the safest method.
 * If you manually extract high temp filament that is linked to the QiDi Box, also unload it from the QiDi Box afterward.
 
-### Manual spool / NO AMS printing
+### Orca filament-source profiles
 
-* For manual spool printing while the QiDi Box is connected, use the `NO AMS` Orca printer profile.
-* The `NO AMS` profile uses `AMS=0`, skips QiDi Box startup logic, and does not call `T0`.
-* Without the `NO AMS` profile, start the print from the printer screen and disable QiDi Box there.
-* A separate manual spool profile is optional, but it helps prevent mistakes.
+Use the printer profile that matches how filament is physically being supplied:
+
+* `AMS MANAGED`: normal QiDi Box / AMS operation. Startup selection, loading, unloading, and tool changes are managed by the AMS workflow.
+* `AMS DIRECT`: filament is physically routed through the QiDi Box, but the print uses `AMS=0` and skips AMS startup/tool-change management.
+* `EXTERNAL SPOOL`: filament bypasses the QiDi Box and is fed directly from an external spool. This profile uses `AMS=0 SOURCE=EXTERNAL`.
+
+Before using `EXTERNAL SPOOL`, unload the active filament through the QiDi Box unload process. Manually pulling filament out of the toolhead does not clear the Box synchronization state.
+
+As a safety guard, `PRINT_START` refuses an `EXTERNAL SPOOL` print when the enabled QiDi Box still reports a synchronized slot such as `slot0`. `AMS DIRECT` is not blocked by this guard because it intentionally supports single-material printing through the Box without AMS management.
+
+TPU-specific `AMS DIRECT - TPU` and `EXTERNAL SPOOL - TPU` variants keep the existing TPU printer-profile tuning while using the same source behavior described above.
 
 ### QiDi Box / AMS notes
 
